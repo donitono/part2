@@ -893,6 +893,328 @@ function Rayfield:CreateWindow(Settings)
 			return ToggleObject
 		end
 
+		function Tab:CreateSlider(Settings)
+			local SliderSettings = {
+				Name = Settings.Name or "Slider",
+				Range = Settings.Range or {0, 100},
+				Increment = Settings.Increment or 1,
+				Suffix = Settings.Suffix or "",
+				CurrentValue = Settings.CurrentValue or Settings.Range[1],
+				Flag = Settings.Flag or nil,
+				Callback = Settings.Callback or function() end
+			}
+
+			-- Create Slider Frame directly in tab content
+			local SliderFrame = Instance.new("Frame")
+			SliderFrame.Name = SliderSettings.Name
+			SliderFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+			SliderFrame.BorderSizePixel = 0
+			SliderFrame.Size = UDim2.new(1, 0, 0, 50)
+			SliderFrame.Parent = TabContent
+
+			-- Add UICorner
+			local SliderFrameCorner = Instance.new("UICorner")
+			SliderFrameCorner.CornerRadius = UDim.new(0, 8)
+			SliderFrameCorner.Parent = SliderFrame
+
+			-- Add UIPadding
+			local SliderPadding = Instance.new("UIPadding")
+			SliderPadding.PaddingLeft = UDim.new(0, 15)
+			SliderPadding.PaddingRight = UDim.new(0, 15)
+			SliderPadding.PaddingTop = UDim.new(0, 8)
+			SliderPadding.PaddingBottom = UDim.new(0, 8)
+			SliderPadding.Parent = SliderFrame
+
+			-- Create Slider Label
+			local SliderLabel = Instance.new("TextLabel")
+			SliderLabel.BackgroundTransparency = 1
+			SliderLabel.Position = UDim2.new(0, 0, 0, 0)
+			SliderLabel.Size = UDim2.new(1, -60, 0, 20)
+			SliderLabel.Font = Enum.Font.SourceSans
+			SliderLabel.Text = SliderSettings.Name
+			SliderLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+			SliderLabel.TextScaled = true
+			SliderLabel.TextXAlignment = Enum.TextXAlignment.Left
+			SliderLabel.Parent = SliderFrame
+
+			-- Create Value Label
+			local ValueLabel = Instance.new("TextLabel")
+			ValueLabel.BackgroundTransparency = 1
+			ValueLabel.Position = UDim2.new(1, -60, 0, 0)
+			ValueLabel.Size = UDim2.new(0, 60, 0, 20)
+			ValueLabel.Font = Enum.Font.SourceSansBold
+			ValueLabel.Text = tostring(SliderSettings.CurrentValue) .. SliderSettings.Suffix
+			ValueLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+			ValueLabel.TextScaled = true
+			ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
+			ValueLabel.Parent = SliderFrame
+
+			-- Create Slider Track
+			local SliderTrack = Instance.new("Frame")
+			SliderTrack.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+			SliderTrack.BorderSizePixel = 0
+			SliderTrack.Position = UDim2.new(0, 0, 1, -15)
+			SliderTrack.Size = UDim2.new(1, 0, 0, 6)
+			SliderTrack.Parent = SliderFrame
+
+			-- Add UICorner to Track
+			local TrackCorner = Instance.new("UICorner")
+			TrackCorner.CornerRadius = UDim.new(0, 3)
+			TrackCorner.Parent = SliderTrack
+
+			-- Create Slider Fill
+			local SliderFill = Instance.new("Frame")
+			SliderFill.BackgroundColor3 = Color3.fromRGB(70, 130, 200)
+			SliderFill.BorderSizePixel = 0
+			SliderFill.Position = UDim2.new(0, 0, 0, 0)
+			SliderFill.Size = UDim2.new(0, 0, 1, 0)
+			SliderFill.Parent = SliderTrack
+
+			-- Add UICorner to Fill
+			local FillCorner = Instance.new("UICorner")
+			FillCorner.CornerRadius = UDim.new(0, 3)
+			FillCorner.Parent = SliderFill
+
+			-- Create Slider Handle
+			local SliderHandle = Instance.new("TextButton")
+			SliderHandle.BackgroundColor3 = Color3.fromRGB(100, 160, 230)
+			SliderHandle.BorderSizePixel = 0
+			SliderHandle.Position = UDim2.new(0, -8, 0.5, -8)
+			SliderHandle.Size = UDim2.new(0, 16, 0, 16)
+			SliderHandle.Text = ""
+			SliderHandle.Parent = SliderTrack
+
+			-- Add UICorner to Handle
+			local HandleCorner = Instance.new("UICorner")
+			HandleCorner.CornerRadius = UDim.new(0.5, 0) -- Circular
+			HandleCorner.Parent = SliderHandle
+
+			-- Variables
+			local dragging = false
+
+			-- Function to update slider
+			local function UpdateSlider(value)
+				value = math.clamp(value, SliderSettings.Range[1], SliderSettings.Range[2])
+				value = math.floor(value / SliderSettings.Increment + 0.5) * SliderSettings.Increment
+				SliderSettings.CurrentValue = value
+
+				-- Update visuals
+				local percentage = (value - SliderSettings.Range[1]) / (SliderSettings.Range[2] - SliderSettings.Range[1])
+				SliderFill.Size = UDim2.new(percentage, 0, 1, 0)
+				SliderHandle.Position = UDim2.new(percentage, -8, 0.5, -8)
+				ValueLabel.Text = tostring(value) .. SliderSettings.Suffix
+
+				-- Callback
+				SliderSettings.Callback(value)
+			end
+
+			-- Mouse/Touch input handling
+			SliderTrack.InputBegan:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					dragging = true
+					local percentage = math.clamp((input.Position.X - SliderTrack.AbsolutePosition.X) / SliderTrack.AbsoluteSize.X, 0, 1)
+					local value = SliderSettings.Range[1] + percentage * (SliderSettings.Range[2] - SliderSettings.Range[1])
+					UpdateSlider(value)
+				end
+			end)
+
+			SliderTrack.InputChanged:Connect(function(input)
+				if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+					local percentage = math.clamp((input.Position.X - SliderTrack.AbsolutePosition.X) / SliderTrack.AbsoluteSize.X, 0, 1)
+					local value = SliderSettings.Range[1] + percentage * (SliderSettings.Range[2] - SliderSettings.Range[1])
+					UpdateSlider(value)
+				end
+			end)
+
+			UserInputService.InputEnded:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					dragging = false
+				end
+			end)
+
+			-- Handle dragging
+			SliderHandle.InputBegan:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+					dragging = true
+				end
+			end)
+
+			-- Initialize slider
+			UpdateSlider(SliderSettings.CurrentValue)
+
+			local SliderObject = {}
+			function SliderObject:Set(Value)
+				UpdateSlider(Value)
+			end
+
+			return SliderObject
+		end
+
+		function Tab:CreateDropdown(Settings)
+			local DropdownSettings = {
+				Name = Settings.Name or "Dropdown",
+				Options = Settings.Options or {},
+				CurrentOption = Settings.CurrentOption or (Settings.Options and Settings.Options[1]) or "",
+				MultipleOptions = Settings.MultipleOptions or false,
+				Flag = Settings.Flag or nil,
+				Callback = Settings.Callback or function() end
+			}
+
+			-- Create Dropdown Frame directly in tab content
+			local DropdownFrame = Instance.new("Frame")
+			DropdownFrame.Name = DropdownSettings.Name
+			DropdownFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+			DropdownFrame.BorderSizePixel = 0
+			DropdownFrame.Size = UDim2.new(1, 0, 0, 40)
+			DropdownFrame.Parent = TabContent
+
+			-- Add UICorner
+			local DropdownCorner = Instance.new("UICorner")
+			DropdownCorner.CornerRadius = UDim.new(0, 8)
+			DropdownCorner.Parent = DropdownFrame
+
+			-- Create Dropdown Button
+			local DropdownButton = Instance.new("TextButton")
+			DropdownButton.BackgroundTransparency = 1
+			DropdownButton.Size = UDim2.new(1, 0, 1, 0)
+			DropdownButton.Font = Enum.Font.SourceSans
+			DropdownButton.Text = DropdownSettings.Name .. ": " .. tostring(DropdownSettings.CurrentOption)
+			DropdownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+			DropdownButton.TextScaled = true
+			DropdownButton.TextXAlignment = Enum.TextXAlignment.Left
+			DropdownButton.Parent = DropdownFrame
+
+			-- Add padding to dropdown text
+			local DropdownPadding = Instance.new("UIPadding")
+			DropdownPadding.PaddingLeft = UDim.new(0, 15)
+			DropdownPadding.PaddingRight = UDim.new(0, 15)
+			DropdownPadding.Parent = DropdownButton
+
+			-- Create Options Frame
+			local OptionsFrame = Instance.new("ScrollingFrame")
+			OptionsFrame.Name = "Options"
+			OptionsFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+			OptionsFrame.BorderSizePixel = 0
+			OptionsFrame.Position = UDim2.new(0, 0, 1, 2)
+			OptionsFrame.Size = UDim2.new(1, 0, 0, 0)
+			OptionsFrame.Visible = false
+			OptionsFrame.ZIndex = 10
+			OptionsFrame.ScrollBarThickness = 8
+			OptionsFrame.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+			OptionsFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+			OptionsFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+			OptionsFrame.ScrollingDirection = Enum.ScrollingDirection.Y
+			OptionsFrame.Parent = DropdownFrame
+
+			-- Add UICorner to Options
+			local OptionsCorner = Instance.new("UICorner")
+			OptionsCorner.CornerRadius = UDim.new(0, 8)
+			OptionsCorner.Parent = OptionsFrame
+
+			-- Add UIListLayout to Options
+			local OptionsLayout = Instance.new("UIListLayout")
+			OptionsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+			OptionsLayout.Padding = UDim.new(0, 2)
+			OptionsLayout.Parent = OptionsFrame
+
+			-- Variables
+			local isOpen = false
+
+			-- Function to update options
+			local function UpdateOptions()
+				for _, child in pairs(OptionsFrame:GetChildren()) do
+					if child:IsA("TextButton") then
+						child:Destroy()
+					end
+				end
+
+				local maxHeight = math.min(#DropdownSettings.Options * 30, 150)
+				OptionsFrame.Size = UDim2.new(1, 0, 0, maxHeight)
+
+				for i, option in ipairs(DropdownSettings.Options) do
+					local OptionButton = Instance.new("TextButton")
+					OptionButton.Name = option
+					OptionButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+					OptionButton.BorderSizePixel = 0
+					OptionButton.Size = UDim2.new(1, 0, 0, 30)
+					OptionButton.Font = Enum.Font.SourceSans
+					OptionButton.Text = option
+					OptionButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+					OptionButton.TextScaled = true
+					OptionButton.Parent = OptionsFrame
+
+					-- Add UICorner
+					local OptionCorner = Instance.new("UICorner")
+					OptionCorner.CornerRadius = UDim.new(0, 5)
+					OptionCorner.Parent = OptionButton
+
+					OptionButton.MouseEnter:Connect(function()
+						OptionButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+					end)
+
+					OptionButton.MouseLeave:Connect(function()
+						OptionButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+					end)
+
+					OptionButton.MouseButton1Click:Connect(function()
+						DropdownSettings.CurrentOption = option
+						DropdownButton.Text = DropdownSettings.Name .. ": " .. option
+						OptionsFrame.Visible = false
+						isOpen = false
+						DropdownSettings.Callback(option)
+					end)
+				end
+			end
+
+			-- Toggle dropdown
+			DropdownButton.MouseButton1Click:Connect(function()
+				isOpen = not isOpen
+				OptionsFrame.Visible = isOpen
+				if isOpen then
+					UpdateOptions()
+				end
+			end)
+
+			-- Close dropdown when clicking outside
+			UserInputService.InputBegan:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 and isOpen then
+					local mousePos = UserInputService:GetMouseLocation()
+					local dropdownPos = DropdownFrame.AbsolutePosition
+					local dropdownSize = DropdownFrame.AbsoluteSize
+					local optionsSize = OptionsFrame.AbsoluteSize
+
+					if mousePos.X < dropdownPos.X or mousePos.X > dropdownPos.X + dropdownSize.X or
+					   mousePos.Y < dropdownPos.Y or mousePos.Y > dropdownPos.Y + dropdownSize.Y + optionsSize.Y then
+						OptionsFrame.Visible = false
+						isOpen = false
+					end
+				end
+			end)
+
+			-- Initialize options
+			if #DropdownSettings.Options > 0 then
+				UpdateOptions()
+			end
+
+			local DropdownObject = {}
+			function DropdownObject:Set(Option)
+				DropdownSettings.CurrentOption = Option
+				DropdownButton.Text = DropdownSettings.Name .. ": " .. Option
+				DropdownSettings.Callback(Option)
+			end
+
+			function DropdownObject:Refresh(Options, CurrentOption)
+				DropdownSettings.Options = Options
+				if CurrentOption then
+					DropdownSettings.CurrentOption = CurrentOption
+					DropdownButton.Text = DropdownSettings.Name .. ": " .. CurrentOption
+				end
+				UpdateOptions()
+			end
+
+			return DropdownObject
+		end
+
 		return Tab
 	end
 

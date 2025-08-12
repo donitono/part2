@@ -118,7 +118,18 @@ local windowConfig = {
 
 -- Mobile specific adjustments
 if isMobile then
-    windowConfig.Size = UDim2.new(0, math.min(screenSize.X * 0.95, 400), 0, math.min(screenSize.Y * 0.8, 500))
+    -- Detect orientation
+    local isLandscape = screenSize.X > screenSize.Y
+    
+    if isLandscape then
+        -- Landscape mode - more compact UI
+        windowConfig.Size = UDim2.new(0, math.min(screenSize.X * 0.8, 600), 0, math.min(screenSize.Y * 0.9, 400))
+        print("XSAN: Landscape mode detected - using compact UI")
+    else
+        -- Portrait mode - standard mobile UI
+        windowConfig.Size = UDim2.new(0, math.min(screenSize.X * 0.95, 400), 0, math.min(screenSize.Y * 0.8, 500))
+        print("XSAN: Portrait mode detected - using standard mobile UI")
+    end
 end
 
 local Window = Rayfield:CreateWindow(windowConfig)
@@ -136,10 +147,16 @@ task.spawn(function()
             local main = rayfieldGui:FindFirstChild("Main")
             if main and isMobile then
                 -- Mobile scaling adjustments
-                local scale = math.min(screenSize.X / 800, screenSize.Y / 600, 1)
+                local isLandscape = screenSize.X > screenSize.Y
                 
-                -- Apply mobile-friendly size
-                main.Size = UDim2.new(0, math.min(screenSize.X * 0.95, 450), 0, math.min(screenSize.Y * 0.85, 550))
+                if isLandscape then
+                    -- Landscape mode - more compact and wider
+                    main.Size = UDim2.new(0, math.min(screenSize.X * 0.8, 600), 0, math.min(screenSize.Y * 0.9, 400))
+                else
+                    -- Portrait mode - taller but narrower
+                    main.Size = UDim2.new(0, math.min(screenSize.X * 0.95, 400), 0, math.min(screenSize.Y * 0.8, 500))
+                end
+                
                 main.Position = UDim2.new(0.5, -main.Size.X.Offset/2, 0.5, -main.Size.Y.Offset/2)
                 
                 -- Adjust text scaling for mobile
@@ -155,16 +172,17 @@ task.spawn(function()
                     end
                 end
                 
-                print("XSAN: Applied mobile UI scaling")
+                print("XSAN: Applied mobile UI scaling for", isLandscape and "landscape" or "portrait", "mode")
             end
             
-            -- Fix scrolling for all platforms
+            -- Fix scrolling for all platforms with enhanced touch support
             for _, descendant in pairs(rayfieldGui:GetDescendants()) do
                 if descendant:IsA("ScrollingFrame") then
                     -- Enable proper scrolling
                     descendant.ScrollingEnabled = true
-                    descendant.ScrollBarThickness = isMobile and 12 or 8
-                    descendant.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+                    descendant.ScrollBarThickness = isMobile and 15 or 8
+                    descendant.ScrollBarImageColor3 = Color3.fromRGB(100, 100, 100)
+                    descendant.ScrollBarImageTransparency = 0.2
                     
                     -- Auto canvas size if supported
                     if descendant:FindFirstChild("UIListLayout") then
@@ -180,9 +198,40 @@ task.spawn(function()
                     if isMobile then
                         descendant.ScrollingDirection = Enum.ScrollingDirection.Y
                         descendant.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
+                        descendant.ScrollBarImageTransparency = 0.1 -- More visible on mobile
+                        
+                        -- Force enable touch scrolling
+                        local UserInputService = game:GetService("UserInputService")
+                        if UserInputService.TouchEnabled then
+                            -- Create touch scroll detection
+                            local touchStartPos = nil
+                            local scrollStartPos = nil
+                            
+                            descendant.InputBegan:Connect(function(input)
+                                if input.UserInputType == Enum.UserInputType.Touch then
+                                    touchStartPos = input.Position
+                                    scrollStartPos = descendant.CanvasPosition
+                                end
+                            end)
+                            
+                            descendant.InputChanged:Connect(function(input)
+                                if input.UserInputType == Enum.UserInputType.Touch and touchStartPos then
+                                    local delta = input.Position - touchStartPos
+                                    local newScrollPos = scrollStartPos - Vector2.new(0, delta.Y * 2) -- 2x scroll speed
+                                    descendant.CanvasPosition = newScrollPos
+                                end
+                            end)
+                            
+                            descendant.InputEnded:Connect(function(input)
+                                if input.UserInputType == Enum.UserInputType.Touch then
+                                    touchStartPos = nil
+                                    scrollStartPos = nil
+                                end
+                            end)
+                        end
                     end
                     
-                    print("XSAN: Fixed scrolling for", descendant.Name)
+                    print("XSAN: Fixed scrolling for", descendant.Name, "with touch support")
                 end
             end
         end
@@ -390,6 +439,113 @@ task.spawn(function()
     FloatingButton.MouseButton1Click:Connect(function()
         if not dragging then
             toggleUI()
+        end
+    end)
+    
+    -- Right click or long press to access menu
+    FloatingButton.MouseButton2Click:Connect(function()
+        if not dragging then
+            -- Create mini context menu
+            local ContextMenu = Instance.new("Frame")
+            ContextMenu.Name = "ContextMenu"
+            ContextMenu.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+            ContextMenu.BorderSizePixel = 0
+            ContextMenu.Position = UDim2.new(0, FloatingButton.AbsolutePosition.X + 80, 0, FloatingButton.AbsolutePosition.Y)
+            ContextMenu.Size = UDim2.new(0, 120, 0, 0)
+            ContextMenu.AutomaticSize = Enum.AutomaticSize.Y
+            ContextMenu.ZIndex = 20
+            ContextMenu.Parent = FloatingButtonGui
+            
+            -- Add UICorner
+            local MenuCorner = Instance.new("UICorner")
+            MenuCorner.CornerRadius = UDim.new(0, 8)
+            MenuCorner.Parent = ContextMenu
+            
+            -- Add UIListLayout
+            local MenuLayout = Instance.new("UIListLayout")
+            MenuLayout.SortOrder = Enum.SortOrder.LayoutOrder
+            MenuLayout.Padding = UDim.new(0, 2)
+            MenuLayout.Parent = ContextMenu
+            
+            -- Add UIPadding
+            local MenuPadding = Instance.new("UIPadding")
+            MenuPadding.PaddingTop = UDim.new(0, 5)
+            MenuPadding.PaddingBottom = UDim.new(0, 5)
+            MenuPadding.PaddingLeft = UDim.new(0, 8)
+            MenuPadding.PaddingRight = UDim.new(0, 8)
+            MenuPadding.Parent = ContextMenu
+            
+            -- Close Button
+            local CloseButton = Instance.new("TextButton")
+            CloseButton.BackgroundColor3 = Color3.fromRGB(200, 100, 100)
+            CloseButton.BorderSizePixel = 0
+            CloseButton.Size = UDim2.new(1, 0, 0, 30)
+            CloseButton.Font = Enum.Font.SourceSansBold
+            CloseButton.Text = "❌ Close Script"
+            CloseButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            CloseButton.TextScaled = true
+            CloseButton.LayoutOrder = 1
+            CloseButton.Parent = ContextMenu
+            
+            local CloseCorner = Instance.new("UICorner")
+            CloseCorner.CornerRadius = UDim.new(0, 5)
+            CloseCorner.Parent = CloseButton
+            
+            CloseButton.MouseButton1Click:Connect(function()
+                -- Destroy all XSAN GUIs
+                if getRayfieldGui() then
+                    getRayfieldGui():Destroy()
+                end
+                FloatingButtonGui:Destroy()
+                NotifyInfo("XSAN", "Script closed. Thanks for using XSAN Fish It Pro!")
+            end)
+            
+            -- Minimize Button
+            local MinimizeButton = Instance.new("TextButton")
+            MinimizeButton.BackgroundColor3 = Color3.fromRGB(100, 150, 200)
+            MinimizeButton.BorderSizePixel = 0
+            MinimizeButton.Size = UDim2.new(1, 0, 0, 30)
+            MinimizeButton.Font = Enum.Font.SourceSans
+            MinimizeButton.Text = "➖ Minimize"
+            MinimizeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+            MinimizeButton.TextScaled = true
+            MinimizeButton.LayoutOrder = 2
+            MinimizeButton.Parent = ContextMenu
+            
+            local MinimizeCorner = Instance.new("UICorner")
+            MinimizeCorner.CornerRadius = UDim.new(0, 5)
+            MinimizeCorner.Parent = MinimizeButton
+            
+            MinimizeButton.MouseButton1Click:Connect(function()
+                if isUIVisible then
+                    toggleUI()
+                end
+                ContextMenu:Destroy()
+            end)
+            
+            -- Auto-close menu after 3 seconds
+            task.spawn(function()
+                task.wait(3)
+                if ContextMenu.Parent then
+                    ContextMenu:Destroy()
+                end
+            end)
+            
+            -- Close menu when clicking outside
+            UserInputService.InputBegan:Connect(function(input)
+                if input.UserInputType == Enum.UserInputType.MouseButton1 then
+                    local mousePos = UserInputService:GetMouseLocation()
+                    local menuPos = ContextMenu.AbsolutePosition
+                    local menuSize = ContextMenu.AbsoluteSize
+                    
+                    if mousePos.X < menuPos.X or mousePos.X > menuPos.X + menuSize.X or
+                       mousePos.Y < menuPos.Y or mousePos.Y > menuPos.Y + menuSize.Y then
+                        if ContextMenu.Parent then
+                            ContextMenu:Destroy()
+                        end
+                    end
+                end
+            end)
         end
     end)
     
