@@ -173,6 +173,37 @@ function Rayfield:CreateWindow(Settings)
 	TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
 	TabListLayout.Padding = UDim.new(0, 1)  -- Reduced padding from 2 to 1
 	TabListLayout.Parent = TabList
+	
+	-- Mobile touch scrolling for TabList
+	if UserInputService.TouchEnabled then
+		TabList.ScrollingEnabled = true
+		TabList.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
+		
+		local dragStart = nil
+		local startPos = nil
+		
+		TabList.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.Touch then
+				dragStart = input.Position
+				startPos = TabList.CanvasPosition
+			end
+		end)
+		
+		TabList.InputChanged:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.Touch and dragStart then
+				local delta = input.Position - dragStart
+				local newY = math.max(0, startPos.Y - delta.Y * 1.5) -- 1.5x scroll speed
+				TabList.CanvasPosition = Vector2.new(0, newY)
+			end
+		end)
+		
+		TabList.InputEnded:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.Touch then
+				dragStart = nil
+				startPos = nil
+			end
+		end)
+	end
 
 	-- Create Content Container
 	local ContentContainer = Instance.new("Frame")
@@ -215,17 +246,19 @@ function Rayfield:CreateWindow(Settings)
 			local screenSize = workspace.CurrentCamera.ViewportSize
 			local isLandscape = screenSize.X > screenSize.Y
 			
+			-- Always enable scrolling for mobile
+			Content.ScrollingEnabled = true
+			Content.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
+			
 			if isLandscape then
 				-- Enhanced mobile landscape scrolling
 				Content.ScrollBarThickness = 12
-				Content.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
-				Content.ScrollingEnabled = true
 				
 				-- Reduce padding for more content space in landscape
-				ContentPadding.PaddingTop = UDim.new(0, 5)
-				ContentPadding.PaddingBottom = UDim.new(0, 5)
-				ContentPadding.PaddingLeft = UDim.new(0, 5)
-				ContentPadding.PaddingRight = UDim.new(0, 5)
+				ContentPadding.PaddingTop = UDim.new(0, 3)
+				ContentPadding.PaddingBottom = UDim.new(0, 3)
+				ContentPadding.PaddingLeft = UDim.new(0, 3)
+				ContentPadding.PaddingRight = UDim.new(0, 3)
 				
 				-- Custom touch scrolling for better responsiveness
 				local dragStart = nil
@@ -254,6 +287,10 @@ function Rayfield:CreateWindow(Settings)
 				end)
 				
 				print("XSAN: Mobile landscape scroll optimization enabled")
+			else
+				-- Portrait mode scrolling
+				Content.ScrollBarThickness = 8
+				print("XSAN: Mobile portrait scroll enabled")
 			end
 		end
 		
@@ -261,6 +298,30 @@ function Rayfield:CreateWindow(Settings)
 		
 		-- Re-setup when screen orientation changes
 		workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(setupMobileScrolling)
+		
+		-- Force update canvas size for scrolling to work
+		spawn(function()
+			wait(2) -- Wait for all content to load
+			local function updateCanvasSize()
+				local totalHeight = 0
+				for _, child in pairs(Content:GetChildren()) do
+					if child:IsA("GuiObject") and child.Visible and child ~= ContentLayout and child ~= ContentPadding then
+						totalHeight = totalHeight + child.AbsoluteSize.Y + ContentLayout.Padding.Offset
+					end
+				end
+				-- Add extra space to ensure scrolling works
+				Content.CanvasSize = UDim2.new(0, 0, 0, math.max(totalHeight + 100, Content.AbsoluteSize.Y + 200))
+				print("XSAN: Canvas size updated to:", totalHeight + 100)
+			end
+			
+			updateCanvasSize()
+			
+			-- Update canvas size when content changes
+			Content.ChildAdded:Connect(function()
+				wait(0.1)
+				updateCanvasSize()
+			end)
+		end)
 	end
 
 	-- Make window draggable
@@ -327,19 +388,62 @@ function Rayfield:CreateWindow(Settings)
 		TabButtonCorner.CornerRadius = UDim.new(0, 3)  -- Smaller corner radius
 		TabButtonCorner.Parent = TabButton
 
-		-- Create Tab Content
-		local TabContent = Instance.new("Frame")
+		-- Create Tab Content as ScrollingFrame for better mobile scrolling
+		local TabContent = Instance.new("ScrollingFrame")
 		TabContent.Name = Name .. "_Content"
 		TabContent.BackgroundTransparency = 1
 		TabContent.Size = UDim2.new(1, 0, 1, 0)
 		TabContent.Visible = false
+		TabContent.ScrollBarThickness = 6
+		TabContent.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+		TabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
+		TabContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
+		TabContent.ScrollingDirection = Enum.ScrollingDirection.Y
+		TabContent.ScrollingEnabled = true
+		TabContent.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
 		TabContent.Parent = Content
 
 		-- Add UIListLayout to TabContent
 		local TabContentLayout = Instance.new("UIListLayout")
 		TabContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-		TabContentLayout.Padding = UDim.new(0, 5)
+		TabContentLayout.Padding = UDim.new(0, 3)  -- Reduced padding for compact
 		TabContentLayout.Parent = TabContent
+		
+		-- Add padding for mobile
+		local TabContentPadding = Instance.new("UIPadding")
+		TabContentPadding.PaddingTop = UDim.new(0, 3)
+		TabContentPadding.PaddingBottom = UDim.new(0, 3)
+		TabContentPadding.PaddingLeft = UDim.new(0, 3)
+		TabContentPadding.PaddingRight = UDim.new(0, 3)
+		TabContentPadding.Parent = TabContent
+		
+		-- Mobile touch scrolling for tab content
+		if UserInputService.TouchEnabled then
+			local dragStart = nil
+			local startPos = nil
+			
+			TabContent.InputBegan:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.Touch then
+					dragStart = input.Position
+					startPos = TabContent.CanvasPosition
+				end
+			end)
+			
+			TabContent.InputChanged:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.Touch and dragStart then
+					local delta = input.Position - dragStart
+					local newY = math.max(0, startPos.Y - delta.Y * 1.5) -- 1.5x scroll speed
+					TabContent.CanvasPosition = Vector2.new(0, newY)
+				end
+			end)
+			
+			TabContent.InputEnded:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.Touch then
+					dragStart = nil
+					startPos = nil
+				end
+			end)
+		end
 
 		-- Tab switching logic
 		TabButton.MouseButton1Click:Connect(function()
