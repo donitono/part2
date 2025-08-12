@@ -14,37 +14,72 @@ local screen = Instance.new("ScreenGui")
 screen.Name = "BuySystemDetector"
 screen.Parent = CoreGui
 
--- Main frame
+-- Main frame (optimized for landscape)
 local frame = Instance.new("Frame", screen)
-frame.Size = UDim2.new(0, 450, 0, 400)
+frame.Size = UDim2.new(0, 500, 0, 280)
 frame.Position = UDim2.new(0, 10, 0, 10)
 frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 frame.BorderSizePixel = 0
+frame.Visible = false -- Start hidden
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
 
--- Make frame draggable
+-- Floating toggle button
+local floatingBtn = Instance.new("TextButton", screen)
+floatingBtn.Size = UDim2.new(0, 60, 0, 60)
+floatingBtn.Position = UDim2.new(1, -80, 0, 20)
+floatingBtn.Text = "🛒"
+floatingBtn.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+floatingBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+floatingBtn.Font = Enum.Font.SourceSansBold
+floatingBtn.TextSize = 24
+floatingBtn.BorderSizePixel = 0
+floatingBtn.ZIndex = 10
+Instance.new("UICorner", floatingBtn).CornerRadius = UDim.new(0.5, 0)
+
+-- Add shadow effect to floating button
+local shadow = Instance.new("Frame", screen)
+shadow.Size = UDim2.new(0, 62, 0, 62)
+shadow.Position = UDim2.new(1, -81, 0, 21)
+shadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+shadow.BackgroundTransparency = 0.7
+shadow.BorderSizePixel = 0
+shadow.ZIndex = 9
+Instance.new("UICorner", shadow).CornerRadius = UDim.new(0.5, 0)
+
+-- Make floating button draggable
 local dragging = false
 local dragStart = nil
 local startPos = nil
 
-frame.InputBegan:Connect(function(input)
+floatingBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = true
         dragStart = input.Position
-        startPos = frame.Position
+        startPos = floatingBtn.Position
     end
 end)
 
-frame.InputChanged:Connect(function(input)
+floatingBtn.InputChanged:Connect(function(input)
     if dragging and input.UserInputType == Enum.UserInputType.MouseMovement then
         local delta = input.Position - dragStart
-        frame.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        local newPos = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        floatingBtn.Position = newPos
+        shadow.Position = UDim2.new(newPos.X.Scale, newPos.X.Offset - 1, newPos.Y.Scale, newPos.Y.Offset + 1)
     end
 end)
 
-frame.InputEnded:Connect(function(input)
+floatingBtn.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
         dragging = false
+    end
+end)
+
+-- Floating button click handler
+floatingBtn.MouseButton1Click:Connect(function()
+    if not dragging then
+        frame.Visible = not frame.Visible
+        floatingBtn.BackgroundColor3 = frame.Visible and Color3.fromRGB(180, 70, 70) or Color3.fromRGB(70, 130, 180)
+        floatingBtn.Text = frame.Visible and "❌" or "🛒"
     end
 end)
 
@@ -58,70 +93,81 @@ title.TextColor3 = Color3.fromRGB(255, 255, 255)
 title.Font = Enum.Font.SourceSansBold
 title.TextSize = 16
 
--- Scroll frame for content
+-- Scroll frame for content (optimized for landscape)
 local scrollFrame = Instance.new("ScrollingFrame", frame)
-scrollFrame.Size = UDim2.new(1, -20, 1, -80)
+scrollFrame.Size = UDim2.new(1, -20, 1, -90)
 scrollFrame.Position = UDim2.new(0, 10, 0, 35)
 scrollFrame.BackgroundTransparency = 1
 scrollFrame.BorderSizePixel = 0
 scrollFrame.ScrollBarThickness = 8
 
--- Info label
+-- Info label (compact for landscape)
 local infoLabel = Instance.new("TextLabel", scrollFrame)
-infoLabel.Size = UDim2.new(1, 0, 0, 350)
+infoLabel.Size = UDim2.new(1, 0, 0, 200)
 infoLabel.Position = UDim2.new(0, 0, 0, 0)
 infoLabel.Text = "Memindai sistem pembelian...\nMendeteksi NPC dan RemoteEvents..."
 infoLabel.BackgroundTransparency = 1
 infoLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
 infoLabel.Font = Enum.Font.SourceSans
-infoLabel.TextSize = 12
+infoLabel.TextSize = 10
 infoLabel.TextWrapped = true
 infoLabel.TextXAlignment = Enum.TextXAlignment.Left
 infoLabel.TextYAlignment = Enum.TextYAlignment.Top
 
--- Copy button
+-- Copy button (compact)
 local copyBtn = Instance.new("TextButton", frame)
-copyBtn.Size = UDim2.new(0, 100, 0, 30)
-copyBtn.Position = UDim2.new(0, 10, 1, -40)
-copyBtn.Text = "Copy Info"
+copyBtn.Size = UDim2.new(0, 70, 0, 25)
+copyBtn.Position = UDim2.new(0, 10, 1, -35)
+copyBtn.Text = "Copy"
 copyBtn.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
 copyBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 copyBtn.Font = Enum.Font.SourceSans
-copyBtn.TextSize = 14
-Instance.new("UICorner", copyBtn).CornerRadius = UDim.new(0, 6)
+copyBtn.TextSize = 11
+Instance.new("UICorner", copyBtn).CornerRadius = UDim.new(0, 4)
 
--- Refresh button
+-- Refresh button (compact)
 local refreshBtn = Instance.new("TextButton", frame)
-refreshBtn.Size = UDim2.new(0, 100, 0, 30)
-refreshBtn.Position = UDim2.new(0, 120, 1, -40)
+refreshBtn.Size = UDim2.new(0, 70, 0, 25)
+refreshBtn.Position = UDim2.new(0, 90, 1, -35)
 refreshBtn.Text = "Refresh"
 refreshBtn.BackgroundColor3 = Color3.fromRGB(70, 150, 70)
 refreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 refreshBtn.Font = Enum.Font.SourceSans
-refreshBtn.TextSize = 14
-Instance.new("UICorner", refreshBtn).CornerRadius = UDim.new(0, 6)
+refreshBtn.TextSize = 11
+Instance.new("UICorner", refreshBtn).CornerRadius = UDim.new(0, 4)
 
--- Monitor button
+-- Monitor button (compact)
 local monitorBtn = Instance.new("TextButton", frame)
-monitorBtn.Size = UDim2.new(0, 100, 0, 30)
-monitorBtn.Position = UDim2.new(0, 230, 1, -40)
+monitorBtn.Size = UDim2.new(0, 70, 0, 25)
+monitorBtn.Position = UDim2.new(0, 170, 1, -35)
 monitorBtn.Text = "Monitor"
 monitorBtn.BackgroundColor3 = Color3.fromRGB(150, 70, 150)
 monitorBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 monitorBtn.Font = Enum.Font.SourceSans
-monitorBtn.TextSize = 14
-Instance.new("UICorner", monitorBtn).CornerRadius = UDim.new(0, 6)
+monitorBtn.TextSize = 11
+Instance.new("UICorner", monitorBtn).CornerRadius = UDim.new(0, 4)
 
--- Close button
+-- Minimize button (new)
+local minimizeBtn = Instance.new("TextButton", frame)
+minimizeBtn.Size = UDim2.new(0, 70, 0, 25)
+minimizeBtn.Position = UDim2.new(0, 250, 1, -35)
+minimizeBtn.Text = "Hide"
+minimizeBtn.BackgroundColor3 = Color3.fromRGB(150, 150, 70)
+minimizeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+minimizeBtn.Font = Enum.Font.SourceSans
+minimizeBtn.TextSize = 11
+Instance.new("UICorner", minimizeBtn).CornerRadius = UDim.new(0, 4)
+
+-- Close button (compact)
 local closeBtn = Instance.new("TextButton", frame)
-closeBtn.Size = UDim2.new(0, 80, 0, 30)
-closeBtn.Position = UDim2.new(0, 340, 1, -40)
+closeBtn.Size = UDim2.new(0, 70, 0, 25)
+closeBtn.Position = UDim2.new(1, -80, 1, -35)
 closeBtn.Text = "Close"
 closeBtn.BackgroundColor3 = Color3.fromRGB(180, 70, 70)
 closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 closeBtn.Font = Enum.Font.SourceSans
-closeBtn.TextSize = 14
-Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
+closeBtn.TextSize = 11
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 4)
 
 -- Variables untuk data detection
 local detectedData = ""
@@ -368,20 +414,20 @@ copyBtn.MouseButton1Click:Connect(function()
             copyBtn.Text = "Copied!"
             task.spawn(function()
                 task.wait(1)
-                copyBtn.Text = "Copy Info"
+                copyBtn.Text = "Copy"
             end)
         else
             copyBtn.Text = "No clipboard"
             task.spawn(function()
                 task.wait(1)
-                copyBtn.Text = "Copy Info"
+                copyBtn.Text = "Copy"
             end)
         end
     end
 end)
 
 refreshBtn.MouseButton1Click:Connect(function()
-    refreshBtn.Text = "Refreshing..."
+    refreshBtn.Text = "Updating..."
     updateDisplay()
     task.spawn(function()
         task.wait(1)
@@ -397,6 +443,12 @@ monitorBtn.MouseButton1Click:Connect(function()
     end
 end)
 
+minimizeBtn.MouseButton1Click:Connect(function()
+    frame.Visible = false
+    floatingBtn.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
+    floatingBtn.Text = "🛒"
+end)
+
 closeBtn.MouseButton1Click:Connect(function()
     stopMonitoring()
     screen:Destroy()
@@ -406,6 +458,11 @@ end)
 -- Initial detection
 updateDisplay()
 
+-- Show floating button initially
+floatingBtn.Visible = true
+shadow.Visible = true
+
 print("🛒 Buy System Detector started!")
 print("📍 Analyzing shop locations, NPCs, and RemoteEvents...")
 print("🔍 Use Monitor button to track real-time buy/sell activities")
+print("💡 Click floating button (🛒) to show/hide interface")

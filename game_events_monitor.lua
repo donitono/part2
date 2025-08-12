@@ -14,16 +14,37 @@ local screen = Instance.new("ScreenGui")
 screen.Name = "GameEventsMonitor"
 screen.Parent = CoreGui
 
--- Main frame
+-- Main frame (landscape optimized)
 local frame = Instance.new("Frame")
 frame.Parent = screen
-frame.Size = UDim2.new(0, 600, 0, 400)
+frame.Size = UDim2.new(0, 700, 0, 300)
 frame.Position = UDim2.new(0, 10, 0, 10)
 frame.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 frame.BorderSizePixel = 0
 frame.Active = true
 frame.Draggable = true
+frame.Visible = false -- Start hidden
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
+
+-- Floating toggle button
+local floatingBtn = Instance.new("TextButton", screen)
+floatingBtn.Size = UDim2.new(0, 60, 0, 60)
+floatingBtn.Position = UDim2.new(1, -80, 0, 230)
+floatingBtn.Text = "⚡"
+floatingBtn.BackgroundColor3 = Color3.fromRGB(150, 100, 200)
+floatingBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+floatingBtn.Font = Enum.Font.SourceSansBold
+floatingBtn.TextSize = 24
+floatingBtn.BorderSizePixel = 0
+floatingBtn.ZIndex = 10
+Instance.new("UICorner", floatingBtn).CornerRadius = UDim.new(0.5, 0)
+
+-- Floating button functionality
+floatingBtn.MouseButton1Click:Connect(function()
+    frame.Visible = not frame.Visible
+    floatingBtn.BackgroundColor3 = frame.Visible and Color3.fromRGB(180, 70, 70) or Color3.fromRGB(150, 100, 200)
+    floatingBtn.Text = frame.Visible and "❌" or "⚡"
+end)
 
 -- Title with live indicator
 local titleFrame = Instance.new("Frame")
