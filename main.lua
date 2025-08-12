@@ -81,11 +81,12 @@ print("XSAN: Loading UI Library...")
 
 local Rayfield
 local success, error = pcall(function()
-    print("XSAN: Attempting to load Rayfield...")
-    -- Try to load modern UI first, fallback to fixed if needed
-    local uiContent = game:HttpGet("https://raw.githubusercontent.com/donitono/part2/main/ui_modern.lua")
+    print("XSAN: Attempting to load UI...")
+    
+    -- Try ui_fixed.lua first (more stable)
+    local uiContent = game:HttpGet("https://raw.githubusercontent.com/donitono/part2/main/ui_fixed.lua")
     if uiContent and #uiContent > 0 then
-        print("XSAN: Loading modern UI library...")
+        print("XSAN: Loading stable UI library...")
         print("XSAN: UI content length:", #uiContent)
         local uiFunc, loadError = loadstring(uiContent)
         if uiFunc then
@@ -93,23 +94,13 @@ local success, error = pcall(function()
             if not Rayfield then
                 error("UI function returned nil")
             end
+            print("XSAN: Stable UI loaded successfully!")
         else
             error("Failed to compile UI: " .. tostring(loadError))
         end
     else
-        print("XSAN: Fallback to fixed UI library...")
-        local fallbackContent = game:HttpGet("https://raw.githubusercontent.com/donitono/part2/main/ui_fixed.lua")
-        local fallbackFunc, fallbackError = loadstring(fallbackContent)
-        if fallbackFunc then
-            Rayfield = fallbackFunc()
-            if not Rayfield then
-                error("Fallback UI function returned nil")
-            end
-        else
-            error("Failed to compile fallback UI: " .. tostring(fallbackError))
-        end
+        error("Failed to fetch UI content")
     end
-    print("XSAN: UI library loaded successfully!")
 end)
 
 if not success then
