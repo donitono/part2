@@ -188,6 +188,60 @@ function Rayfield:CreateWindow(Settings)
 	ContentPadding.PaddingRight = UDim.new(0, 10)
 	ContentPadding.Parent = Content
 
+	-- Mobile landscape scroll optimization
+	if UserInputService.TouchEnabled then
+		local function setupMobileScrolling()
+			local screenSize = workspace.CurrentCamera.ViewportSize
+			local isLandscape = screenSize.X > screenSize.Y
+			
+			if isLandscape then
+				-- Enhanced mobile landscape scrolling
+				Content.ScrollBarThickness = 12
+				Content.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
+				Content.ScrollingEnabled = true
+				
+				-- Reduce padding for more content space in landscape
+				ContentPadding.PaddingTop = UDim.new(0, 5)
+				ContentPadding.PaddingBottom = UDim.new(0, 5)
+				ContentPadding.PaddingLeft = UDim.new(0, 5)
+				ContentPadding.PaddingRight = UDim.new(0, 5)
+				
+				-- Custom touch scrolling for better responsiveness
+				local dragStart = nil
+				local startPos = nil
+				
+				Content.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.Touch then
+						dragStart = input.Position
+						startPos = Content.CanvasPosition
+					end
+				end)
+				
+				Content.InputChanged:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.Touch and dragStart then
+						local delta = input.Position - dragStart
+						local newY = math.max(0, startPos.Y - delta.Y * 2) -- 2x scroll speed
+						Content.CanvasPosition = Vector2.new(0, newY)
+					end
+				end)
+				
+				Content.InputEnded:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.Touch then
+						dragStart = nil
+						startPos = nil
+					end
+				end)
+				
+				print("XSAN: Mobile landscape scroll optimization enabled")
+			end
+		end
+		
+		setupMobileScrolling()
+		
+		-- Re-setup when screen orientation changes
+		workspace.CurrentCamera:GetPropertyChangedSignal("ViewportSize"):Connect(setupMobileScrolling)
+	end
+
 	-- Make window draggable
 	local dragging = false
 	local dragInput
@@ -1213,6 +1267,200 @@ function Rayfield:CreateWindow(Settings)
 			end
 
 			return DropdownObject
+		end
+
+		function Tab:CreateInput(Settings)
+			local InputSettings = {
+				Name = Settings.Name or "Input",
+				PlaceholderText = Settings.PlaceholderText or "Enter text...",
+				RemoveTextAfterFocusLost = Settings.RemoveTextAfterFocusLost or false,
+				Flag = Settings.Flag or nil,
+				Callback = Settings.Callback or function() end
+			}
+
+			-- Create Input Frame directly in tab content
+			local InputFrame = Instance.new("Frame")
+			InputFrame.Name = InputSettings.Name
+			InputFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+			InputFrame.BorderSizePixel = 0
+			InputFrame.Size = UDim2.new(1, 0, 0, 45)
+			InputFrame.Parent = TabContent
+
+			-- Add UICorner
+			local InputFrameCorner = Instance.new("UICorner")
+			InputFrameCorner.CornerRadius = UDim.new(0, 8)
+			InputFrameCorner.Parent = InputFrame
+
+			-- Add UIPadding
+			local InputPadding = Instance.new("UIPadding")
+			InputPadding.PaddingLeft = UDim.new(0, 15)
+			InputPadding.PaddingRight = UDim.new(0, 15)
+			InputPadding.PaddingTop = UDim.new(0, 8)
+			InputPadding.PaddingBottom = UDim.new(0, 8)
+			InputPadding.Parent = InputFrame
+
+			-- Create Input Label
+			local InputLabel = Instance.new("TextLabel")
+			InputLabel.BackgroundTransparency = 1
+			InputLabel.Position = UDim2.new(0, 0, 0, 0)
+			InputLabel.Size = UDim2.new(1, 0, 0, 15)
+			InputLabel.Font = Enum.Font.SourceSans
+			InputLabel.Text = InputSettings.Name
+			InputLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+			InputLabel.TextScaled = true
+			InputLabel.TextXAlignment = Enum.TextXAlignment.Left
+			InputLabel.Parent = InputFrame
+
+			-- Create Input Box
+			local InputBox = Instance.new("TextBox")
+			InputBox.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+			InputBox.BorderSizePixel = 0
+			InputBox.Position = UDim2.new(0, 0, 0, 20)
+			InputBox.Size = UDim2.new(1, 0, 0, 25)
+			InputBox.Font = Enum.Font.SourceSans
+			InputBox.PlaceholderText = InputSettings.PlaceholderText
+			InputBox.Text = ""
+			InputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+			InputBox.TextScaled = true
+			InputBox.TextXAlignment = Enum.TextXAlignment.Left
+			InputBox.Parent = InputFrame
+
+			-- Add UICorner to Input Box
+			local InputBoxCorner = Instance.new("UICorner")
+			InputBoxCorner.CornerRadius = UDim.new(0, 5)
+			InputBoxCorner.Parent = InputBox
+
+			-- Add UIPadding to Input Box
+			local InputBoxPadding = Instance.new("UIPadding")
+			InputBoxPadding.PaddingLeft = UDim.new(0, 8)
+			InputBoxPadding.PaddingRight = UDim.new(0, 8)
+			InputBoxPadding.Parent = InputBox
+
+			-- Focus events
+			InputBox.FocusLost:Connect(function(enterPressed)
+				if enterPressed then
+					InputSettings.Callback(InputBox.Text)
+				end
+				
+				if InputSettings.RemoveTextAfterFocusLost then
+					InputBox.Text = ""
+				end
+			end)
+
+			-- Visual feedback
+			InputBox.Focused:Connect(function()
+				TweenService:Create(InputBox, TweenInfo.new(0.2), {
+					BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+				}):Play()
+			end)
+
+			InputBox.FocusLost:Connect(function()
+				TweenService:Create(InputBox, TweenInfo.new(0.2), {
+					BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+				}):Play()
+			end)
+
+			local InputObject = {}
+			function InputObject:Set(Text)
+				InputBox.Text = Text
+				InputSettings.Callback(Text)
+			end
+
+			return InputObject
+		end
+
+		function Tab:CreateInput(Settings)
+			local InputSettings = {
+				Name = Settings.Name or "Input",
+				PlaceholderText = Settings.PlaceholderText or "Enter text...",
+				RemoveTextAfterFocusLost = Settings.RemoveTextAfterFocusLost or false,
+				CurrentValue = Settings.CurrentValue or "",
+				Flag = Settings.Flag or nil,
+				Callback = Settings.Callback or function() end
+			}
+
+			-- Create Input Frame directly in tab content
+			local InputFrame = Instance.new("Frame")
+			InputFrame.Name = InputSettings.Name
+			InputFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+			InputFrame.BorderSizePixel = 0
+			InputFrame.Size = UDim2.new(1, 0, 0, 50)
+			InputFrame.Parent = TabContent
+
+			-- Add UICorner
+			local InputFrameCorner = Instance.new("UICorner")
+			InputFrameCorner.CornerRadius = UDim.new(0, 8)
+			InputFrameCorner.Parent = InputFrame
+
+			-- Add UIPadding
+			local InputPadding = Instance.new("UIPadding")
+			InputPadding.PaddingLeft = UDim.new(0, 15)
+			InputPadding.PaddingRight = UDim.new(0, 15)
+			InputPadding.PaddingTop = UDim.new(0, 8)
+			InputPadding.PaddingBottom = UDim.new(0, 8)
+			InputPadding.Parent = InputFrame
+
+			-- Create Input Label
+			local InputLabel = Instance.new("TextLabel")
+			InputLabel.BackgroundTransparency = 1
+			InputLabel.Position = UDim2.new(0, 0, 0, 0)
+			InputLabel.Size = UDim2.new(1, 0, 0, 18)
+			InputLabel.Font = Enum.Font.SourceSans
+			InputLabel.Text = InputSettings.Name
+			InputLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+			InputLabel.TextScaled = true
+			InputLabel.TextXAlignment = Enum.TextXAlignment.Left
+			InputLabel.Parent = InputFrame
+
+			-- Create Text Input
+			local TextInput = Instance.new("TextBox")
+			TextInput.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+			TextInput.BorderSizePixel = 0
+			TextInput.Position = UDim2.new(0, 0, 1, -22)
+			TextInput.Size = UDim2.new(1, 0, 0, 22)
+			TextInput.Font = Enum.Font.SourceSans
+			TextInput.Text = InputSettings.CurrentValue
+			TextInput.PlaceholderText = InputSettings.PlaceholderText
+			TextInput.TextColor3 = Color3.fromRGB(255, 255, 255)
+			TextInput.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+			TextInput.TextScaled = true
+			TextInput.ClearTextOnFocus = false
+			TextInput.Parent = InputFrame
+
+			-- Add UICorner to TextInput
+			local TextInputCorner = Instance.new("UICorner")
+			TextInputCorner.CornerRadius = UDim.new(0, 5)
+			TextInputCorner.Parent = TextInput
+
+			-- Add UIPadding to TextInput
+			local TextInputPadding = Instance.new("UIPadding")
+			TextInputPadding.PaddingLeft = UDim.new(0, 8)
+			TextInputPadding.PaddingRight = UDim.new(0, 8)
+			TextInputPadding.Parent = TextInput
+
+			-- Input events
+			TextInput.FocusLost:Connect(function(enterPressed)
+				if InputSettings.RemoveTextAfterFocusLost and not enterPressed then
+					TextInput.Text = ""
+				end
+				InputSettings.CurrentValue = TextInput.Text
+				InputSettings.Callback(TextInput.Text)
+			end)
+
+			TextInput.Changed:Connect(function(property)
+				if property == "Text" then
+					InputSettings.CurrentValue = TextInput.Text
+				end
+			end)
+
+			local InputObject = {}
+			function InputObject:Set(Value)
+				TextInput.Text = Value
+				InputSettings.CurrentValue = Value
+				InputSettings.Callback(Value)
+			end
+
+			return InputObject
 		end
 
 		return Tab

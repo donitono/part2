@@ -122,13 +122,13 @@ if isMobile then
     local isLandscape = screenSize.X > screenSize.Y
     
     if isLandscape then
-        -- Landscape mode - more compact UI
-        windowConfig.Size = UDim2.new(0, math.min(screenSize.X * 0.8, 600), 0, math.min(screenSize.Y * 0.9, 400))
-        print("XSAN: Landscape mode detected - using compact UI")
+        -- Landscape mode - VERY compact UI for mobile landscape
+        windowConfig.Size = UDim2.new(0, math.min(screenSize.X * 0.55, 450), 0, math.min(screenSize.Y * 0.80, 320))
+        print("XSAN: Landscape mode detected - using ultra compact UI")
     else
         -- Portrait mode - standard mobile UI
-        windowConfig.Size = UDim2.new(0, math.min(screenSize.X * 0.95, 400), 0, math.min(screenSize.Y * 0.8, 500))
-        print("XSAN: Portrait mode detected - using standard mobile UI")
+        windowConfig.Size = UDim2.new(0, math.min(screenSize.X * 0.85, 350), 0, math.min(screenSize.Y * 0.70, 450))
+        print("XSAN: Portrait mode detected - using compact mobile UI")
     end
 end
 
@@ -150,11 +150,11 @@ task.spawn(function()
                 local isLandscape = screenSize.X > screenSize.Y
                 
                 if isLandscape then
-                    -- Landscape mode - more compact and wider
-                    main.Size = UDim2.new(0, math.min(screenSize.X * 0.8, 600), 0, math.min(screenSize.Y * 0.9, 400))
+                    -- Landscape mode - ULTRA compact
+                    main.Size = UDim2.new(0, math.min(screenSize.X * 0.55, 450), 0, math.min(screenSize.Y * 0.80, 320))
                 else
-                    -- Portrait mode - taller but narrower
-                    main.Size = UDim2.new(0, math.min(screenSize.X * 0.95, 400), 0, math.min(screenSize.Y * 0.8, 500))
+                    -- Portrait mode - compact
+                    main.Size = UDim2.new(0, math.min(screenSize.X * 0.85, 350), 0, math.min(screenSize.Y * 0.70, 450))
                 end
                 
                 main.Position = UDim2.new(0.5, -main.Size.X.Offset/2, 0.5, -main.Size.Y.Offset/2)
