@@ -86,12 +86,30 @@ local success, error = pcall(function()
     local uiContent = game:HttpGet("https://raw.githubusercontent.com/donitono/part2/main/ui_modern.lua")
     if uiContent and #uiContent > 0 then
         print("XSAN: Loading modern UI library...")
-        Rayfield = loadstring(uiContent)()
+        print("XSAN: UI content length:", #uiContent)
+        local uiFunc, loadError = loadstring(uiContent)
+        if uiFunc then
+            Rayfield = uiFunc()
+            if not Rayfield then
+                error("UI function returned nil")
+            end
+        else
+            error("Failed to compile UI: " .. tostring(loadError))
+        end
     else
         print("XSAN: Fallback to fixed UI library...")
-        Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/donitono/part2/main/ui_fixed.lua"))()
+        local fallbackContent = game:HttpGet("https://raw.githubusercontent.com/donitono/part2/main/ui_fixed.lua")
+        local fallbackFunc, fallbackError = loadstring(fallbackContent)
+        if fallbackFunc then
+            Rayfield = fallbackFunc()
+            if not Rayfield then
+                error("Fallback UI function returned nil")
+            end
+        else
+            error("Failed to compile fallback UI: " .. tostring(fallbackError))
+        end
     end
-    print("XSAN: Rayfield loadstring executed")
+    print("XSAN: UI library loaded successfully!")
 end)
 
 if not success then
