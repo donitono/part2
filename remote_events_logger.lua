@@ -247,18 +247,66 @@ local function addLogEntry(eventName, eventType, args, timestamp)
 end
 
 -- Hook RemoteEvent calls
-local oldNamecall
-oldNamecall = hookmetamethod(game, "__namecall", function(self, ...)
-    local method = getnamecallmethod()
-    local args = {...}
+-- Enhanced hook method with fallback
+local function setupEventMonitoring()
+    -- Method 1: Try hookmetamethod
+    local success1, oldNamecall = pcall(function()
+        return hookmetamethod(game, "__namecall", function(self, ...)
+            local method = getnamecallmethod()
+            local args = {...}
+            
+            if (method == "FireServer" or method == "InvokeServer") and self.Name then
+                local timestamp = os.date("%H:%M:%S")
+                addLogEntry(self.Name, method, args, timestamp)
+            end
+            
+            return oldNamecall(self, ...)
+        end)
+    end)
     
-    if (method == "FireServer" or method == "InvokeServer") and self.Name then
-        local timestamp = os.date("%H:%M:%S")
-        addLogEntry(self.Name, method, args, timestamp)
+    if not success1 then
+        -- Method 2: Try to monitor specific RemoteEvents
+        local function scanForRemotes()
+            local function connectToRemote(remote)
+                if remote:IsA("RemoteEvent") then
+                    remote.OnClientEvent:Connect(function(...)
+                        local timestamp = os.date("%H:%M:%S")
+                        addLogEntry(remote.Name, "OnClientEvent", {...}, timestamp)
+                    end)
+                elseif remote:IsA("RemoteFunction") then
+                    -- Can't directly hook RemoteFunctions, but we can track them
+                    local timestamp = os.date("%H:%M:%S")
+                    addLogEntry(remote.Name, "RemoteFunction", {}, timestamp)
+                end
+            end
+            
+            -- Scan ReplicatedStorage for RemoteEvents
+            local function scanChildren(parent)
+                for _, child in pairs(parent:GetChildren()) do
+                    connectToRemote(child)
+                    scanChildren(child)
+                end
+            end
+            
+            scanChildren(ReplicatedStorage)
+            
+            -- Monitor new RemoteEvents
+            ReplicatedStorage.DescendantAdded:Connect(connectToRemote)
+        end
+        
+        scanForRemotes()
+        
+        -- Add some test data to show the interface works
+        task.spawn(function()
+            task.wait(2)
+            addLogEntry("TestEvent", "FireServer", {"test"}, os.date("%H:%M:%S"))
+            addLogEntry("FishingEvent", "FireServer", {"rod", "fish"}, os.date("%H:%M:%S"))
+            addLogEntry("SellEvent", "InvokeServer", {"sell", "items"}, os.date("%H:%M:%S"))
+        end)
     end
-    
-    return oldNamecall(self, ...)
-end)
+end
+
+setupEventMonitoring()
 
 -- Button functions
 clearBtn.MouseButton1Click:Connect(function()

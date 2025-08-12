@@ -17,9 +17,11 @@ screen.Parent = CoreGui
 -- Main frame (optimized for landscape)
 local frame = Instance.new("Frame", screen)
 frame.Size = UDim2.new(0, 500, 0, 280)
-frame.Position = UDim2.new(0, 10, 0, 10)
+frame.Position = UDim2.new(0, 10, 0, 80) -- Better positioning for landscape
 frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
 frame.BorderSizePixel = 0
+frame.Active = true
+frame.Draggable = true
 frame.Visible = false -- Start hidden
 Instance.new("UICorner", frame).CornerRadius = UDim.new(0, 8)
 
@@ -401,9 +403,18 @@ end
 
 -- Fungsi untuk update display
 local function updateDisplay()
-    detectedData = detectBuySystem()
-    infoLabel.Text = detectedData
-    scrollFrame.CanvasSize = UDim2.new(0, 0, 0, infoLabel.TextBounds.Y)
+    if not infoLabel then
+        warn("Buy System Detector: infoLabel not ready")
+        return
+    end
+    
+    pcall(function()
+        detectedData = detectBuySystem()
+        infoLabel.Text = detectedData
+        if scrollFrame and scrollFrame.CanvasSize then
+            scrollFrame.CanvasSize = UDim2.new(0, 0, 0, infoLabel.TextBounds.Y)
+        end
+    end)
 end
 
 -- Button functionality
@@ -455,8 +466,11 @@ closeBtn.MouseButton1Click:Connect(function()
     print("Buy System Detector closed")
 end)
 
--- Initial detection
-updateDisplay()
+-- Initial detection with delay to ensure UI is ready
+task.spawn(function()
+    task.wait(0.5) -- Wait for UI to be fully initialized
+    updateDisplay()
+end)
 
 -- Show floating button initially
 floatingBtn.Visible = true
