@@ -180,15 +180,22 @@ btnClear.Size = UDim2.new(1,0,0,28); btnClear.Position = UDim2.new(0,0,0,275)
 btnClear.Text = "Clear UI Logs"; btnClear.BackgroundColor3 = Color3.fromRGB(120,60,60)
 Instance.new("UICorner", btnClear).CornerRadius = UDim.new(0,6)
 
+local btnDebug = Instance.new("TextButton", right)
+btnDebug.Size = UDim2.new(1,0,0,28); btnDebug.Position = UDim2.new(0,0,0,310)
+btnDebug.Text = "Debug: List RemoteEvents"; btnDebug.BackgroundColor3 = Color3.fromRGB(80,80,120)
+Instance.new("UICorner", btnDebug).CornerRadius = UDim.new(0,6)
+
 local statusLbl = Instance.new("TextLabel", right)
-statusLbl.Size = UDim2.new(1,0,0,40); statusLbl.Position = UDim2.new(0,0,0,310)
+statusLbl.Size = UDim2.new(1,0,0,40); statusLbl.Position = UDim2.new(0,0,0,345)
 statusLbl.Text = "Status: Ready"; statusLbl.BackgroundTransparency = 1; statusLbl.TextColor3 = Color3.fromRGB(180,180,180)
 
 -- state
-local logs = {} -- { {time=..., full=..., short=..., argsTable=..., remoteRef=...} }
+local logs = {}
 local uiButtons = {}
 local selectedIndex = nil
 local loopState = false
+local hookedEvents = 0
+local eventCount = 0
 
 -- helper add UI entry
 local function addEntry(fullPath, argsTbl, direction)
@@ -253,11 +260,14 @@ end
 local function tryHookRemoteEvent(obj)
     pcall(function()
         if not obj or not obj:IsA("RemoteEvent") then return end
-        if not passesFilter(obj.Name) and filterBox.Text~="" then return end
+        hookedEvents = hookedEvents + 1
+        statusLbl.Text = "Status: Hooked " .. hookedEvents .. " RemoteEvents. Events logged: " .. eventCount
         obj.OnClientEvent:Connect(function(...)
             local args = {...}
             if not passesFilter(obj.Name) then return end
             if not onlyMy(args) then return end
+            eventCount = eventCount + 1
+            statusLbl.Text = "Status: Hooked " .. hookedEvents .. " RemoteEvents. Events logged: " .. eventCount
             addEntry((pcall(function() return obj:GetFullName() end) and obj:GetFullName() or tostring(obj)), args, "FROM")
         end)
     end)
@@ -266,7 +276,10 @@ end
 -- Hook client->server FireServer (via __namecall)
 local function tryHookNamecallForFire()
     local ok, mt = pcall(function() return getrawmetatable(game) end)
-    if not ok or not mt then return end
+    if not ok or not mt then 
+        statusLbl.Text = "Status: Cannot access metamethods (executor limitation)"
+        return 
+    end
     local old = mt.__namecall
     local setok = pcall(function() setreadonly(mt,false) end)
     mt.__namecall = newcclosure(function(self, ...)
@@ -274,6 +287,8 @@ local function tryHookNamecallForFire()
         if method == "FireServer" and typeof(self)=="Instance" and self:IsA("RemoteEvent") then
             local args = {...}
             if passesFilter(self.Name) and onlyMy(args) then
+                eventCount = eventCount + 1
+                statusLbl.Text = "Status: Hooked " .. hookedEvents .. " RemoteEvents. Events logged: " .. eventCount
                 addEntry((pcall(function() return self:GetFullName() end) and self:GetFullName() or tostring(self)), args, "TO")
             end
         end
@@ -310,6 +325,24 @@ btnCopyAll.MouseButton1Click:Connect(function()
     if pcall(function() return setclipboard end) then pcall(function() setclipboard(combined) end); statusLbl.Text = "Status: Copied all to clipboard" else statusLbl.Text = "Status: setclipboard not available" end
 end)
 clearBtn.MouseButton1Click:Connect(function() logs = {}; for _,b in ipairs(uiButtons) do if b and b.Parent then b:Destroy() end end; uiButtons = {}; selectedIndex = nil; lblSelected.Text = "Selected: (klik entri di kiri)"; argsBox.Text = "" end)
+btnDebug.MouseButton1Click:Connect(function()
+    local remoteEvents = {}
+    for _,obj in ipairs(game:GetDescendants()) do
+        if obj:IsA("RemoteEvent") then
+            table.insert(remoteEvents, obj:GetFullName())
+        end
+    end
+    statusLbl.Text = "Found " .. #remoteEvents .. " RemoteEvents in game"
+    if #remoteEvents > 0 then
+        local text = "RemoteEvents found:\n" .. table.concat(remoteEvents, "\n")
+        if setclipboard then setclipboard(text) end
+        print("=== REMOTE EVENTS DEBUG ===")
+        for i,name in ipairs(remoteEvents) do
+            print(i .. ": " .. name)
+        end
+        print("=== END DEBUG ===")
+    end
+end)
 onlyMeCB.MouseButton1Click:Connect(function() onlyMeCB._on = not onlyMeCB._on; onlyMeCB.Text = "Only My Actions: " .. (onlyMeCB._on and "ON" or "OFF") end)
 
 btnReplay.MouseButton1Click:Connect(function()
@@ -357,6 +390,8 @@ loopToggle.MouseButton1Click:Connect(function()
     end
 end)
 
+-- Add test entry and initial setup info
+addEntry("TEST", {"This is a test entry to verify UI is working"}, "TEST")
 statusLbl.Text = "Status: Listening RemoteEvents. Saved -> " .. FILENAME
 -- initial message
 append_file(FILENAME, ts() .. " RemoteEvent Logger Started")
