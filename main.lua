@@ -122,13 +122,13 @@ if isMobile then
     local isLandscape = screenSize.X > screenSize.Y
     
     if isLandscape then
-        -- Landscape mode - Wider UI untuk text tidak terpotong
-        windowConfig.Size = UDim2.new(0, math.min(screenSize.X * 0.45, 400), 0, math.min(screenSize.Y * 0.70, 280))
-        print("XSAN: Landscape mode detected - using wider compact UI")
+        -- Landscape mode - Much wider UI untuk nama fitur tidak terpotong
+        windowConfig.Size = UDim2.new(0, math.min(screenSize.X * 0.60, 500), 0, math.min(screenSize.Y * 0.75, 300))
+        print("XSAN: Landscape mode detected - using wider UI for feature names")
     else
-        -- Portrait mode - compact like Delta
-        windowConfig.Size = UDim2.new(0, math.min(screenSize.X * 0.75, 300), 0, math.min(screenSize.Y * 0.60, 380))
-        print("XSAN: Portrait mode detected - using compact UI")
+        -- Portrait mode - lebih lebar untuk readability
+        windowConfig.Size = UDim2.new(0, math.min(screenSize.X * 0.85, 350), 0, math.min(screenSize.Y * 0.70, 420))
+        print("XSAN: Portrait mode detected - using wider UI")
     end
 end
 
@@ -146,15 +146,15 @@ task.spawn(function()
         if rayfieldGui then
             local main = rayfieldGui:FindFirstChild("Main")
             if main and isMobile then
-                -- Mobile scaling adjustments - Wider untuk readability
+                -- Mobile scaling adjustments - Much wider untuk feature names
                 local isLandscape = screenSize.X > screenSize.Y
                 
                 if isLandscape then
-                    -- Landscape mode - Wider untuk text tidak terpotong
-                    main.Size = UDim2.new(0, math.min(screenSize.X * 0.45, 400), 0, math.min(screenSize.Y * 0.70, 280))
+                    -- Landscape mode - Much wider untuk nama fitur tidak terpotong
+                    main.Size = UDim2.new(0, math.min(screenSize.X * 0.60, 500), 0, math.min(screenSize.Y * 0.75, 300))
                 else
-                    -- Portrait mode - compact tapi readable
-                    main.Size = UDim2.new(0, math.min(screenSize.X * 0.75, 300), 0, math.min(screenSize.Y * 0.60, 380))
+                    -- Portrait mode - lebih lebar untuk readability
+                    main.Size = UDim2.new(0, math.min(screenSize.X * 0.85, 350), 0, math.min(screenSize.Y * 0.70, 420))
                 end
                 
                 main.Position = UDim2.new(0.5, -main.Size.X.Offset/2, 0.5, -main.Size.Y.Offset/2)

@@ -86,21 +86,21 @@ function Rayfield:CreateWindow(Settings)
 	Main.Position = UDim2.new(0.5, -300, 0.5, -200)
 	Main.Size = UDim2.new(0, 600, 0, 400)
 	
-	-- Mobile optimization - make wider for readability
+	-- Mobile optimization - make much wider for feature names
 	if UserInputService.TouchEnabled then
 		local screenSize = workspace.CurrentCamera.ViewportSize
 		local isLandscape = screenSize.X > screenSize.Y
 		
 		if isLandscape then
-			-- Wider compact for landscape untuk text tidak terpotong
-			local width = math.min(screenSize.X * 0.45, 400)
-			local height = math.min(screenSize.Y * 0.70, 280)
+			-- Much wider for landscape agar nama fitur tidak terpotong
+			local width = math.min(screenSize.X * 0.60, 500)
+			local height = math.min(screenSize.Y * 0.75, 300)
 			Main.Size = UDim2.new(0, width, 0, height)
 			Main.Position = UDim2.new(0.5, -width/2, 0.5, -height/2)
 		else
-			-- Compact for portrait tapi readable
-			local width = math.min(screenSize.X * 0.75, 300)
-			local height = math.min(screenSize.Y * 0.60, 380)
+			-- Wider for portrait untuk readability
+			local width = math.min(screenSize.X * 0.85, 350)
+			local height = math.min(screenSize.Y * 0.70, 420)
 			Main.Size = UDim2.new(0, width, 0, height)
 			Main.Position = UDim2.new(0.5, -width/2, 0.5, -height/2)
 		end
@@ -151,7 +151,7 @@ function Rayfield:CreateWindow(Settings)
 	TabContainer.Name = "TabContainer"
 	TabContainer.BackgroundTransparency = 1
 	TabContainer.Position = UDim2.new(0, 0, 0, 25)  -- Adjusted for smaller topbar
-	TabContainer.Size = UDim2.new(0, 140, 1, -25)   -- Increased width from 120 to 140 for readability
+	TabContainer.Size = UDim2.new(0, 130, 1, -25)   -- Reduced from 140 to 130, content area jadi lebih lebar
 	TabContainer.Parent = Main
 
 	-- Create Tab List with scrolling
@@ -209,8 +209,8 @@ function Rayfield:CreateWindow(Settings)
 	local ContentContainer = Instance.new("Frame")
 	ContentContainer.Name = "ContentContainer"
 	ContentContainer.BackgroundTransparency = 1
-	ContentContainer.Position = UDim2.new(0, 140, 0, 25)  -- Adjusted for wider tab width
-	ContentContainer.Size = UDim2.new(1, -140, 1, -25)   -- Adjusted accordingly
+	ContentContainer.Position = UDim2.new(0, 130, 0, 25)  -- Adjusted for tab width 130
+	ContentContainer.Size = UDim2.new(1, -130, 1, -25)   -- More space untuk content area
 	ContentContainer.Parent = Main
 
 	-- Create Content with scrolling
@@ -255,10 +255,10 @@ function Rayfield:CreateWindow(Settings)
 				Content.ScrollBarThickness = 12
 				
 				-- Reduce padding for more content space in landscape
-				ContentPadding.PaddingTop = UDim.new(0, 3)
-				ContentPadding.PaddingBottom = UDim.new(0, 3)
-				ContentPadding.PaddingLeft = UDim.new(0, 3)
-				ContentPadding.PaddingRight = UDim.new(0, 3)
+				ContentPadding.PaddingTop = UDim.new(0, 2)     -- Reduced to 2px
+				ContentPadding.PaddingBottom = UDim.new(0, 2)  -- Reduced to 2px  
+				ContentPadding.PaddingLeft = UDim.new(0, 2)    -- Reduced to 2px
+				ContentPadding.PaddingRight = UDim.new(0, 2)   -- Reduced to 2px
 				
 				-- Custom touch scrolling for better responsiveness
 				local dragStart = nil
