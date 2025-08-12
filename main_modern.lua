@@ -30,6 +30,7 @@ local TeleportService = game:GetService("TeleportService")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
 local StarterGui = game:GetService("StarterGui")
+local CoreGui = game:GetService("CoreGui")
 
 -- Enhanced notification system with proper Z-Index
 local function Notify(title, text, duration)
@@ -43,10 +44,10 @@ local function Notify(title, text, duration)
         
         -- Try CoreGui first for better visibility
         local success = pcall(function()
-            ScreenGui.Parent = game.CoreGui
+            ScreenGui.Parent = CoreGui
         end)
         if not success then
-            ScreenGui.Parent = game.Players.LocalPlayer.PlayerGui
+            ScreenGui.Parent = LocalPlayer.PlayerGui
         end
         
         local NotificationFrame = Instance.new("Frame")
@@ -128,436 +129,139 @@ end
 
 print("XSAN: Basic services OK")
 
--- XSAN Anti Ghost Touch System
-local ButtonCooldowns = {}
-local BUTTON_COOLDOWN = 0.5
-
-local function CreateSafeCallback(originalCallback, buttonId)
-    return function(...)
-        local currentTime = tick()
-        if ButtonCooldowns[buttonId] and currentTime - ButtonCooldowns[buttonId] < BUTTON_COOLDOWN then
-            return
-        end
-        ButtonCooldowns[buttonId] = currentTime
-        
-        local success, result = pcall(originalCallback, ...)
-        if not success then
-            warn("XSAN Error:", result)
-        end
-    end
-end
-
--- Load Modern UI Library (Embedded)
-print("XSAN: Loading Modern UI Library...")
-
--- Embedded UI library (fixed version)
-local Rayfield = loadstring([[
--- Rayfield UI Library (Fixed Version for Tab Distribution)
-local cloneref = cloneref or function(obj) return obj end
-
-local function getService(name)
-	local service = game:GetService(name)
-	return cloneref and cloneref(service) or service
-end
-
--- Services
-local TweenService = getService("TweenService")
-local UserInputService = getService("UserInputService")
-local GuiService = getService("GuiService")
-local RunService = getService("RunService")
-local Players = getService("Players")
-local CoreGui = getService("CoreGui")
-
--- Variables
-local Player = Players.LocalPlayer
-local PlayerGui = Player:WaitForChild("PlayerGui")
-
--- Create main ScreenGui with proper Z-Index
-local RayfieldLibrary = Instance.new("ScreenGui")
-RayfieldLibrary.Name = "RayfieldLibrary"
-RayfieldLibrary.ResetOnSpawn = false
-RayfieldLibrary.IgnoreGuiInset = true
-RayfieldLibrary.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-RayfieldLibrary.DisplayOrder = 10
-RayfieldLibrary.Parent = PlayerGui
-
--- Variables for scaling and themes
-local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
-local screenSize = workspace.CurrentCamera.ViewportSize
-
--- Global tracking
-local CurrentTabs = {}
-local CurrentTab = nil
-
--- Main Rayfield object
-local Rayfield = {}
-
-function Rayfield:CreateWindow(Settings)
-	local Window = {}
-	
-	-- Clear any existing tabs
-	CurrentTabs = {}
-	
-	-- Create main container with proper sizing
-	local Main = Instance.new("Frame")
-	Main.Name = "Main"
-	Main.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-	Main.BorderSizePixel = 0
-	Main.Position = UDim2.new(0.5, 0, 0.5, 0)
-	Main.AnchorPoint = Vector2.new(0.5, 0.5)
-	
-	-- Use compact 600x320 size (landscape friendly)
-	if isMobile then
-		Main.Size = UDim2.new(0, 600, 0, 320) -- Fixed compact size
-	else
-		Main.Size = UDim2.new(0, 600, 0, 380) -- Desktop still compact
-	end
-	
-	Main.Parent = RayfieldLibrary
-
-	local MainCorner = Instance.new("UICorner")
-	MainCorner.CornerRadius = UDim.new(0, 10)
-	MainCorner.Parent = Main
-
-	-- Create title bar
-	local TitleBar = Instance.new("Frame")
-	TitleBar.Name = "TitleBar"
-	TitleBar.Size = UDim2.new(1, 0, 0, 40)
-	TitleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-	TitleBar.BorderSizePixel = 0
-	TitleBar.Parent = Main
-
-	local TitleCorner = Instance.new("UICorner")
-	TitleCorner.CornerRadius = UDim.new(0, 10)
-	TitleCorner.Parent = TitleBar
-
-	-- Fix corner for bottom
-	local TitleFix = Instance.new("Frame")
-	TitleFix.Size = UDim2.new(1, 0, 0, 10)
-	TitleFix.Position = UDim2.new(0, 0, 1, -10)
-	TitleFix.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
-	TitleFix.BorderSizePixel = 0
-	TitleFix.Parent = TitleBar
-
-	-- Title text
-	local Title = Instance.new("TextLabel")
-	Title.Size = UDim2.new(1, -20, 1, 0)
-	Title.Position = UDim2.new(0, 10, 0, 0)
-	Title.BackgroundTransparency = 1
-	Title.Text = Settings.Name or "Rayfield"
-	Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-	Title.TextScaled = true
-	Title.Font = Enum.Font.SourceSansBold
-	Title.Parent = TitleBar
-
-	-- Create tab container
-	local TabContainer = Instance.new("Frame")
-	TabContainer.Name = "TabContainer"
-	TabContainer.Size = UDim2.new(1, 0, 0, 35)
-	TabContainer.Position = UDim2.new(0, 0, 0, 45)
-	TabContainer.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-	TabContainer.BorderSizePixel = 0
-	TabContainer.Parent = Main
-
-	local TabLayout = Instance.new("UIListLayout")
-	TabLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	TabLayout.FillDirection = Enum.FillDirection.Horizontal
-	TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
-	TabLayout.Padding = UDim.new(0, 2)
-	TabLayout.Parent = TabContainer
-
-	-- Create content area
-	local ContentFrame = Instance.new("Frame")
-	ContentFrame.Name = "ContentFrame"
-	ContentFrame.Size = UDim2.new(1, 0, 1, -85)
-	ContentFrame.Position = UDim2.new(0, 0, 0, 85)
-	ContentFrame.BackgroundTransparency = 1
-	ContentFrame.Parent = Main
-
-	function Window:CreateTab(Name, Icon)
-		local Tab = {}
-		
-		-- Create tab button
-		local TabButton = Instance.new("TextButton")
-		TabButton.Name = Name
-		TabButton.Size = UDim2.new(0, 120, 1, 0)
-		TabButton.BackgroundColor3 = #CurrentTabs == 0 and Color3.fromRGB(60, 120, 180) or Color3.fromRGB(50, 50, 60)
-		TabButton.BorderSizePixel = 0
-		TabButton.Text = Name
-		TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-		TabButton.TextScaled = true
-		TabButton.Font = Enum.Font.SourceSans
-		TabButton.Parent = TabContainer
-
-		local TabCorner = Instance.new("UICorner")
-		TabCorner.CornerRadius = UDim.new(0, 6)
-		TabCorner.Parent = TabButton
-
-		-- Create tab content
-		local TabContent = Instance.new("ScrollingFrame")
-		TabContent.Name = Name .. "Content"
-		TabContent.Size = UDim2.new(1, 0, 1, 0)
-		TabContent.Position = UDim2.new(0, 0, 0, 0)
-		TabContent.BackgroundTransparency = 1
-		TabContent.ScrollBarThickness = 8
-		TabContent.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
-		TabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
-		TabContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
-		TabContent.Visible = #CurrentTabs == 0 -- First tab visible
-		TabContent.Parent = ContentFrame
-
-		local ContentLayout = Instance.new("UIListLayout")
-		ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-		ContentLayout.Padding = UDim.new(0, 5)
-		ContentLayout.Parent = TabContent
-
-		local ContentPadding = Instance.new("UIPadding")
-		ContentPadding.PaddingTop = UDim.new(0, 10)
-		ContentPadding.PaddingBottom = UDim.new(0, 10)
-		ContentPadding.PaddingLeft = UDim.new(0, 10)
-		ContentPadding.PaddingRight = UDim.new(0, 10)
-		ContentPadding.Parent = TabContent
-
-		-- Tab click event
-		TabButton.MouseButton1Click:Connect(function()
-			-- Hide all tabs
-			for _, tabData in pairs(CurrentTabs) do
-				tabData.Content.Visible = false
-				tabData.Button.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
-			end
-			
-			-- Show this tab
-			TabContent.Visible = true
-			TabButton.BackgroundColor3 = Color3.fromRGB(60, 120, 180)
-			CurrentTab = Tab
-		end)
-
-		-- Store tab data
-		table.insert(CurrentTabs, Tab)
-		if #CurrentTabs == 1 then
-			CurrentTab = Tab
-		end
-
-		Tab.Content = TabContent
-		Tab.Button = TabButton
-
-		-- Tab-specific Create methods (FIXED VERSION)
-		function Tab:CreateParagraph(Settings)
-			local Container = Instance.new("Frame")
-			Container.Size = UDim2.new(1, 0, 0, 0)
-			Container.BackgroundTransparency = 1
-			Container.AutomaticSize = Enum.AutomaticSize.Y
-			Container.Parent = Tab.Content -- Use Tab.Content directly
-
-			if Settings.Title then
-				local Title = Instance.new("TextLabel")
-				Title.Size = UDim2.new(1, 0, 0, 20)
-				Title.BackgroundTransparency = 1
-				Title.Text = Settings.Title
-				Title.TextColor3 = Color3.fromRGB(255, 255, 255)
-				Title.Font = Enum.Font.SourceSansBold
-				Title.TextSize = 12
-				Title.TextXAlignment = Enum.TextXAlignment.Left
-				Title.Parent = Container
-			end
-
-			local Content = Instance.new("TextLabel")
-			Content.Size = UDim2.new(1, 0, 0, 0)
-			Content.Position = Settings.Title and UDim2.new(0, 0, 0, 25) or UDim2.new(0, 0, 0, 0)
-			Content.BackgroundTransparency = 1
-			Content.Text = Settings.Content or ""
-			Content.TextColor3 = Color3.fromRGB(200, 200, 200)
-			Content.Font = Enum.Font.SourceSans
-			Content.TextSize = 10
-			Content.TextWrapped = true
-			Content.TextXAlignment = Enum.TextXAlignment.Left
-			Content.TextYAlignment = Enum.TextYAlignment.Top
-			Content.AutomaticSize = Enum.AutomaticSize.Y
-			Content.Parent = Container
-
-			local Layout = Instance.new("UIListLayout")
-			Layout.SortOrder = Enum.SortOrder.LayoutOrder
-			Layout.Padding = UDim.new(0, 2)
-			Layout.Parent = Container
-
-			return Container
-		end
-
-		function Tab:CreateButton(Settings)
-			local Button = Instance.new("TextButton")
-			Button.Size = UDim2.new(1, 0, 0, 30)
-			Button.BackgroundColor3 = Color3.fromRGB(60, 120, 180)
-			Button.BorderSizePixel = 0
-			Button.Text = Settings.Name or "Button"
-			Button.TextColor3 = Color3.fromRGB(255, 255, 255)
-			Button.Font = Enum.Font.SourceSansBold
-			Button.TextSize = 11
-			Button.Parent = Tab.Content -- Use Tab.Content directly
-
-			local Corner = Instance.new("UICorner")
-			Corner.CornerRadius = UDim.new(0, 6)
-			Corner.Parent = Button
-
-			Button.MouseButton1Click:Connect(function()
-				if Settings.Callback then
-					Settings.Callback()
-				end
-			end)
-
-			return Button
-		end
-
-		function Tab:CreateToggle(Settings)
-			local Container = Instance.new("Frame")
-			Container.Size = UDim2.new(1, 0, 0, 35)
-			Container.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-			Container.BorderSizePixel = 0
-			Container.Parent = Tab.Content -- Use Tab.Content directly
-
-			local ContainerCorner = Instance.new("UICorner")
-			ContainerCorner.CornerRadius = UDim.new(0, 6)
-			ContainerCorner.Parent = Container
-
-			local Label = Instance.new("TextLabel")
-			Label.Size = UDim2.new(1, -60, 1, 0)
-			Label.Position = UDim2.new(0, 10, 0, 0)
-			Label.BackgroundTransparency = 1
-			Label.Text = Settings.Name or "Toggle"
-			Label.TextColor3 = Color3.fromRGB(255, 255, 255)
-			Label.Font = Enum.Font.SourceSans
-			Label.TextSize = 11
-			Label.TextXAlignment = Enum.TextXAlignment.Left
-			Label.Parent = Container
-
-			local ToggleButton = Instance.new("TextButton")
-			ToggleButton.Size = UDim2.new(0, 40, 0, 20)
-			ToggleButton.Position = UDim2.new(1, -50, 0.5, -10)
-			ToggleButton.BackgroundColor3 = Settings.CurrentValue and Color3.fromRGB(60, 120, 180) or Color3.fromRGB(80, 80, 80)
-			ToggleButton.BorderSizePixel = 0
-			ToggleButton.Text = ""
-			ToggleButton.Parent = Container
-
-			local ToggleCorner = Instance.new("UICorner")
-			ToggleCorner.CornerRadius = UDim.new(0.5, 0)
-			ToggleCorner.Parent = ToggleButton
-
-			local isToggled = Settings.CurrentValue or false
-
-			ToggleButton.MouseButton1Click:Connect(function()
-				isToggled = not isToggled
-				ToggleButton.BackgroundColor3 = isToggled and Color3.fromRGB(60, 120, 180) or Color3.fromRGB(80, 80, 80)
-				if Settings.Callback then
-					Settings.Callback(isToggled)
-				end
-			end)
-
-			return Container
-		end
-
-		function Tab:CreateDropdown(Settings)
-			local Container = Instance.new("Frame")
-			Container.Size = UDim2.new(1, 0, 0, 35)
-			Container.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
-			Container.BorderSizePixel = 0
-			Container.Parent = Tab.Content -- Use Tab.Content directly
-
-			local ContainerCorner = Instance.new("UICorner")
-			ContainerCorner.CornerRadius = UDim.new(0, 6)
-			ContainerCorner.Parent = Container
-
-			local Label = Instance.new("TextLabel")
-			Label.Size = UDim2.new(0.5, 0, 1, 0)
-			Label.Position = UDim2.new(0, 10, 0, 0)
-			Label.BackgroundTransparency = 1
-			Label.Text = Settings.Name or "Dropdown"
-			Label.TextColor3 = Color3.fromRGB(255, 255, 255)
-			Label.Font = Enum.Font.SourceSans
-			Label.TextSize = 11
-			Label.TextXAlignment = Enum.TextXAlignment.Left
-			Label.Parent = Container
-
-			local DropdownButton = Instance.new("TextButton")
-			DropdownButton.Size = UDim2.new(0.5, -20, 0, 25)
-			DropdownButton.Position = UDim2.new(0.5, 10, 0, 5)
-			DropdownButton.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
-			DropdownButton.BorderSizePixel = 0
-			DropdownButton.Text = Settings.CurrentOption or "Select..."
-			DropdownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-			DropdownButton.Font = Enum.Font.SourceSans
-			DropdownButton.TextSize = 10
-			DropdownButton.Parent = Container
-
-			-- Simple dropdown - cycle through options
-			local Options = Settings.Options or {}
-			local CurrentIndex = 1
-			
-			for i, option in ipairs(Options) do
-				if option == Settings.CurrentOption then
-					CurrentIndex = i
-					break
-				end
-			end
-
-			DropdownButton.MouseButton1Click:Connect(function()
-				CurrentIndex = CurrentIndex + 1
-				if CurrentIndex > #Options then
-					CurrentIndex = 1
-				end
-				
-				DropdownButton.Text = Options[CurrentIndex]
-				
-				if Settings.Callback then
-					Settings.Callback(Options[CurrentIndex])
-				end
-			end)
-
-			return Container
-		end
-
-		return Tab
-	end
-
-	-- Window utility functions
-	function Window:Refresh()
-		if Main and Main.Parent then
-			Main.Parent = Main.Parent
-		end
-	end
-
-	return Window
-end
-
-return Rayfield
-]])()
-
-if not Rayfield then
-    warn("XSAN ERROR: Failed to load embedded UI library")
-    return
-end
-
-print("XSAN: Modern UI library loaded successfully!")
-
 -- Mobile/Android detection
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
 local screenSize = workspace.CurrentCamera.ViewportSize
 
 print("XSAN: Platform Detection - Mobile:", isMobile, "Screen Size:", screenSize.X .. "x" .. screenSize.Y)
 
--- Create Modern Window
-print("XSAN: Creating modern window...")
-local Window = Rayfield:CreateWindow({
-    Name = "🐟 XSAN Fish It Pro Ultimate v2.0",
-    LoadingTitle = "XSAN Fish It Pro Ultimate",
-    LoadingSubtitle = "Modern Tab Interface - by XSAN",
-    Theme = "DarkBlue",
-    ConfigurationSaving = {
-        Enabled = true,
-        FolderName = "XSAN",
-        FileName = "FishItProModern"
-    }
-})
+-- Create main ScreenGui
+local ScreenGui = Instance.new("ScreenGui")
+ScreenGui.Name = "XSAN_ModernUI"
+ScreenGui.ResetOnSpawn = false
+ScreenGui.IgnoreGuiInset = true
+ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
 
-print("XSAN: Window created successfully!")
+-- Try to parent to CoreGui first, then fallback to PlayerGui
+local success = pcall(function()
+    ScreenGui.Parent = CoreGui
+end)
+if not success then
+    ScreenGui.Parent = LocalPlayer.PlayerGui
+end
+
+-- Responsive main frame optimized for mobile landscape
+local isLandscape = screenSize.X > screenSize.Y
+local frameWidth = isLandscape and 650 or 500  -- Mobile friendly
+local frameHeight = isLandscape and 400 or 450  -- Mobile friendly
+
+local mainFrame = Instance.new("Frame")
+mainFrame.Name = "MainFrame"
+mainFrame.Size = UDim2.new(0, frameWidth, 0, frameHeight)
+mainFrame.Position = UDim2.new(0.5, -frameWidth/2, 0.5, -frameHeight/2)
+mainFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+mainFrame.BorderSizePixel = 0
+mainFrame.Active = true
+mainFrame.Draggable = true
+mainFrame.Parent = ScreenGui
+
+local mainCorner = Instance.new("UICorner")
+mainCorner.CornerRadius = UDim.new(0, 10)
+mainCorner.Parent = mainFrame
+
+local mainStroke = Instance.new("UIStroke")
+mainStroke.Color = Color3.fromRGB(70, 130, 200)
+mainStroke.Thickness = 2
+mainStroke.Parent = mainFrame
+
+-- Title bar
+local titleBar = Instance.new("Frame")
+titleBar.Name = "TitleBar"
+titleBar.Size = UDim2.new(1, 0, 0, 40)
+titleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+titleBar.BorderSizePixel = 0
+titleBar.Parent = mainFrame
+
+local titleCorner = Instance.new("UICorner")
+titleCorner.CornerRadius = UDim.new(0, 10)
+titleCorner.Parent = titleBar
+
+local titleFix = Instance.new("Frame")
+titleFix.Size = UDim2.new(1, 0, 0, 10)
+titleFix.Position = UDim2.new(0, 0, 1, -10)
+titleFix.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+titleFix.BorderSizePixel = 0
+titleFix.Parent = titleBar
+
+local titleLabel = Instance.new("TextLabel")
+titleLabel.Size = UDim2.new(1, -80, 1, 0)
+titleLabel.Position = UDim2.new(0, 10, 0, 0)
+titleLabel.BackgroundTransparency = 1
+titleLabel.Text = "🐟 XSAN Fish It Pro Ultimate v2.0"
+titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+titleLabel.TextScaled = true
+titleLabel.Font = Enum.Font.SourceSansBold
+titleLabel.Parent = titleBar
+
+-- Close button
+local closeButton = Instance.new("TextButton")
+closeButton.Size = UDim2.new(0, 30, 0, 30)
+closeButton.Position = UDim2.new(1, -35, 0, 5)
+closeButton.BackgroundColor3 = Color3.fromRGB(200, 60, 60)
+closeButton.BorderSizePixel = 0
+closeButton.Text = "✕"
+closeButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+closeButton.TextScaled = true
+closeButton.Font = Enum.Font.SourceSansBold
+closeButton.Parent = titleBar
+
+local closeCorner = Instance.new("UICorner")
+closeCorner.CornerRadius = UDim.new(0.5, 0)
+closeCorner.Parent = closeButton
+
+closeButton.MouseButton1Click:Connect(function()
+    ScreenGui:Destroy()
+end)
+
+-- Tab container
+local tabContainer = Instance.new("Frame")
+tabContainer.Name = "TabContainer"
+tabContainer.Size = UDim2.new(1, 0, 0, 35)
+tabContainer.Position = UDim2.new(0, 0, 0, 45)
+tabContainer.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+tabContainer.BorderSizePixel = 0
+tabContainer.Parent = mainFrame
+
+local tabLayout = Instance.new("UIListLayout")
+tabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+tabLayout.FillDirection = Enum.FillDirection.Horizontal
+tabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+tabLayout.Padding = UDim.new(0, 2)
+tabLayout.Parent = tabContainer
+
+-- Content area
+local contentFrame = Instance.new("ScrollingFrame")
+contentFrame.Name = "ContentFrame"
+contentFrame.Size = UDim2.new(1, 0, 1, -85)
+contentFrame.Position = UDim2.new(0, 0, 0, 85)
+contentFrame.BackgroundTransparency = 1
+contentFrame.ScrollBarThickness = 8
+contentFrame.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+contentFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+contentFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+contentFrame.Parent = mainFrame
+
+local contentLayout = Instance.new("UIListLayout")
+contentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+contentLayout.Padding = UDim.new(0, 5)
+contentLayout.Parent = contentFrame
+
+local contentPadding = Instance.new("UIPadding")
+contentPadding.PaddingTop = UDim.new(0, 10)
+contentPadding.PaddingBottom = UDim.new(0, 10)
+contentPadding.PaddingLeft = UDim.new(0, 10)
+contentPadding.PaddingRight = UDim.new(0, 10)
+contentPadding.Parent = contentFrame
 
 -- === GAME VARIABLES ===
 local fishing = false
@@ -565,7 +269,6 @@ local autoFishing = false
 local autoShaking = false
 local autoReeling = false
 local autoSelling = false
-local autoSellEnabled = false
 local autoCasting = false
 local autoUpgrading = false
 local useGamepass = false
@@ -591,9 +294,8 @@ local fishingAnalytics = {
 
 -- Game detection and RemoteEvents
 local remotes = {}
-local player = game.Players.LocalPlayer
+local player = LocalPlayer
 local character = player.Character or player.CharacterAdded:Wait()
-local humanoid = character:WaitForChild("Humanoid")
 
 -- Find RemoteEvents with better error handling
 local function findRemotes()
@@ -636,244 +338,276 @@ task.spawn(function()
     end
 end)
 
--- === TAB 1: INFO (HANYA INFO, TIDAK ADA FITUR) ===
-local InfoTab = Window:CreateTab("📋 INFO", "🏠")
+-- UI Creation Helper Functions
+local function createButton(name, callback)
+    local button = Instance.new("TextButton")
+    button.Size = UDim2.new(1, 0, 0, 30)
+    button.BackgroundColor3 = Color3.fromRGB(60, 120, 180)
+    button.BorderSizePixel = 0
+    button.Text = name
+    button.TextColor3 = Color3.fromRGB(255, 255, 255)
+    button.Font = Enum.Font.SourceSansBold
+    button.TextSize = 11
+    button.Parent = contentFrame
 
-InfoTab:CreateParagraph({
-    Title = "🌟 XSAN Fish It Pro Ultimate v2.0",
-    Content = "Selamat datang di XSAN Fish It Pro Ultimate Edition dengan Modern Tab Interface! Script premium dengan fitur terlengkap untuk Fish It!"
-})
+    local corner = Instance.new("UICorner")
+    corner.CornerRadius = UDim.new(0, 6)
+    corner.Parent = button
 
-InfoTab:CreateParagraph({
-    Title = "✨ What's New in v2.0",
-    Content = "• Modern Tab-based Interface (NEW!)\n• Mobile Landscape Optimized\n• Enhanced Performance\n• Better Error Handling\n• Improved Analytics\n• Smart Notifications"
-})
+    if callback then
+        button.MouseButton1Click:Connect(callback)
+    end
 
-InfoTab:CreateParagraph({
-    Title = "📖 How to Use",
-    Content = "1. Gunakan tab AUTO FISH untuk fishing automation\n2. Tab TELEPORT untuk berpindah lokasi\n3. Tab INVENTORY untuk item management\n4. Tab ANALYTICS untuk statistik\n5. Tab SETTINGS untuk konfigurasi"
-})
+    return button
+end
 
-InfoTab:CreateParagraph({
-    Title = "👨‍💻 Developer Info",
-    Content = "Created by XSAN\nInstagram: @_bangicoo\nGitHub: github.com/codeico\n\nTrusted by thousands of players worldwide!"
-})
+local function createToggle(name, currentValue, callback)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(1, 0, 0, 35)
+    container.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+    container.BorderSizePixel = 0
+    container.Parent = contentFrame
 
--- === TAB 2: AUTO FISH (SEMUA FITUR FISHING DI SINI) ===
-local AutoFishTab = Window:CreateTab("🎣 AUTO FISH", "🎣")
+    local containerCorner = Instance.new("UICorner")
+    containerCorner.CornerRadius = UDim.new(0, 6)
+    containerCorner.Parent = container
 
-AutoFishTab:CreateParagraph({
-    Title = "🎣 Automated Fishing System",
-    Content = "Ultimate fishing automation with smart features and customizable settings."
-})
+    local label = Instance.new("TextLabel")
+    label.Size = UDim2.new(1, -60, 1, 0)
+    label.Position = UDim2.new(0, 10, 0, 0)
+    label.BackgroundTransparency = 1
+    label.Text = name
+    label.TextColor3 = Color3.fromRGB(255, 255, 255)
+    label.Font = Enum.Font.SourceSans
+    label.TextSize = 11
+    label.TextXAlignment = Enum.TextXAlignment.Left
+    label.Parent = container
 
-AutoFishTab:CreateParagraph({
-    Title = "🔥 Quick Start Presets",
-    Content = "Pilih preset sesuai kebutuhan Anda. Setiap preset sudah dioptimalkan untuk hasil terbaik!"
-})
+    local toggleButton = Instance.new("TextButton")
+    toggleButton.Size = UDim2.new(0, 40, 0, 20)
+    toggleButton.Position = UDim2.new(1, -50, 0.5, -10)
+    toggleButton.BackgroundColor3 = currentValue and Color3.fromRGB(60, 120, 180) or Color3.fromRGB(80, 80, 80)
+    toggleButton.BorderSizePixel = 0
+    toggleButton.Text = ""
+    toggleButton.Parent = container
 
-local presetOptions = {"Balanced", "Speed Focus", "Value Focus", "Casual", "Hardcore"}
-AutoFishTab:CreateDropdown({
-    Name = "🎯 Select Preset",
-    Options = presetOptions,
-    CurrentOption = selectedPreset,
-    Callback = CreateSafeCallback(function(option)
-        selectedPreset = option
-        
-        -- Apply preset settings
-        if option == "Speed Focus" then
-            fishingDelay = 0.5
-            castPower = 80
-            autoShaking = true
-            autoReeling = true
-            Notify("Preset Applied", "Speed Focus - Fast fishing enabled!")
-        elseif option == "Value Focus" then
-            fishingDelay = 2
-            castPower = 100
-            equipBestRod = true
-            smartCasting = true
-            Notify("Preset Applied", "Value Focus - Quality over quantity!")
-        elseif option == "Casual" then
-            fishingDelay = 1.5
-            castPower = 70
-            autoShaking = false
-            Notify("Preset Applied", "Casual - Relaxed fishing mode!")
-        elseif option == "Hardcore" then
-            fishingDelay = 0.3
-            castPower = 100
-            autoShaking = true
-            autoReeling = true
-            autoSelling = true
-            smartCasting = true
-            Notify("Preset Applied", "Hardcore - Maximum automation!")
-        else -- Balanced
-            fishingDelay = 1
-            castPower = 85
-            autoShaking = true
-            autoReeling = false
-            Notify("Preset Applied", "Balanced - Perfect for most players!")
+    local toggleCorner = Instance.new("UICorner")
+    toggleCorner.CornerRadius = UDim.new(0.5, 0)
+    toggleCorner.Parent = toggleButton
+
+    local isToggled = currentValue
+
+    toggleButton.MouseButton1Click:Connect(function()
+        isToggled = not isToggled
+        toggleButton.BackgroundColor3 = isToggled and Color3.fromRGB(60, 120, 180) or Color3.fromRGB(80, 80, 80)
+        if callback then
+            callback(isToggled)
         end
-    end, "preset_dropdown")
-})
+    end)
 
-AutoFishTab:CreateButton({
-    Name = "🚀 Apply Selected Preset",
-    Callback = CreateSafeCallback(function()
-        -- Apply the currently selected preset
-        if selectedPreset == "Speed Focus" then
-            fishingDelay = 0.5
-            castPower = 80
-            autoShaking = true
-            autoReeling = true
-        elseif selectedPreset == "Value Focus" then
-            fishingDelay = 2
-            castPower = 100
-            equipBestRod = true
-            smartCasting = true
-        elseif selectedPreset == "Casual" then
-            fishingDelay = 1.5
-            castPower = 70
-            autoShaking = false
-        elseif selectedPreset == "Hardcore" then
-            fishingDelay = 0.3
-            castPower = 100
-            autoShaking = true
-            autoReeling = true
-            autoSelling = true
-            smartCasting = true
-        else -- Balanced
-            fishingDelay = 1
-            castPower = 85
-            autoShaking = true
-            autoReeling = false
+    return container
+end
+
+local function createParagraph(title, content)
+    local container = Instance.new("Frame")
+    container.Size = UDim2.new(1, 0, 0, 0)
+    container.BackgroundTransparency = 1
+    container.AutomaticSize = Enum.AutomaticSize.Y
+    container.Parent = contentFrame
+
+    if title then
+        local titleLabel = Instance.new("TextLabel")
+        titleLabel.Size = UDim2.new(1, 0, 0, 20)
+        titleLabel.BackgroundTransparency = 1
+        titleLabel.Text = title
+        titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        titleLabel.Font = Enum.Font.SourceSansBold
+        titleLabel.TextSize = 12
+        titleLabel.TextXAlignment = Enum.TextXAlignment.Left
+        titleLabel.Parent = container
+    end
+
+    local contentLabel = Instance.new("TextLabel")
+    contentLabel.Size = UDim2.new(1, 0, 0, 0)
+    contentLabel.Position = title and UDim2.new(0, 0, 0, 25) or UDim2.new(0, 0, 0, 0)
+    contentLabel.BackgroundTransparency = 1
+    contentLabel.Text = content or ""
+    contentLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+    contentLabel.Font = Enum.Font.SourceSans
+    contentLabel.TextSize = 10
+    contentLabel.TextWrapped = true
+    contentLabel.TextXAlignment = Enum.TextXAlignment.Left
+    contentLabel.TextYAlignment = Enum.TextYAlignment.Top
+    contentLabel.AutomaticSize = Enum.AutomaticSize.Y
+    contentLabel.Parent = container
+
+    local layout = Instance.new("UIListLayout")
+    layout.SortOrder = Enum.SortOrder.LayoutOrder
+    layout.Padding = UDim.new(0, 2)
+    layout.Parent = container
+
+    return container
+end
+
+-- Tab System
+local tabs = {}
+local currentTab = nil
+
+local function createTab(name, emoji)
+    local tabButton = Instance.new("TextButton")
+    tabButton.Size = UDim2.new(0, 100, 1, 0)
+    tabButton.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+    tabButton.BorderSizePixel = 0
+    tabButton.Text = emoji .. " " .. name
+    tabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    tabButton.TextScaled = true
+    tabButton.Font = Enum.Font.SourceSans
+    tabButton.Parent = tabContainer
+
+    local tabCorner = Instance.new("UICorner")
+    tabCorner.CornerRadius = UDim.new(0, 6)
+    tabCorner.Parent = tabButton
+
+    local tab = {
+        button = tabButton,
+        content = {},
+        isActive = false
+    }
+
+    tabButton.MouseButton1Click:Connect(function()
+        -- Hide all tabs
+        for _, t in pairs(tabs) do
+            t.button.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+            for _, element in pairs(t.content) do
+                element.Visible = false
+            end
+            t.isActive = false
         end
         
-        Notify("✅ Preset Applied", selectedPreset .. " settings activated!")
-    end, "apply_preset_btn")
-})
+        -- Show this tab
+        tabButton.BackgroundColor3 = Color3.fromRGB(60, 120, 180)
+        for _, element in pairs(tab.content) do
+            element.Visible = true
+        end
+        tab.isActive = true
+        currentTab = tab
+    end)
 
-local mainFishingToggle = AutoFishTab:CreateToggle({
-    Name = "🎣 Enable Auto Fishing",
-    CurrentValue = autoFishing,
-    Callback = CreateSafeCallback(function(value)
-        autoFishing = value
-        fishing = value
-        
-        if value then
-            Notify("🎣 Auto Fishing", "Started!")
-            -- Start fishing loop
-            task.spawn(function()
-                while autoFishing do
-                    pcall(function()
-                        -- Fishing logic here
-                        if remotes.Cast then
-                            remotes.Cast:FireServer(castPower)
-                        end
-                        
-                        -- Auto shaking
-                        if autoShaking and remotes.Shake then
-                            wait(math.random(1, 3))
-                            remotes.Shake:FireServer()
-                        end
-                        
-                        -- Auto reeling
-                        if autoReeling and remotes.Reel then
-                            wait(math.random(2, 4))
-                            remotes.Reel:FireServer()
-                        end
-                        
-                        -- Update analytics
-                        fishingAnalytics.fishCaught = fishingAnalytics.fishCaught + 1
-                    end)
+    tabs[name] = tab
+    return tab
+end
+
+local function addToTab(tabName, element)
+    if tabs[tabName] then
+        table.insert(tabs[tabName].content, element)
+        element.Visible = tabs[tabName].isActive
+        element.Parent = contentFrame
+    end
+end
+
+-- Create all tabs
+local infoTab = createTab("INFO", "📋")
+local autoFishTab = createTab("AUTO FISH", "🎣")
+local teleportTab = createTab("TELEPORT", "🌍")
+local inventoryTab = createTab("INVENTORY", "🎒")
+local buySystemTab = createTab("BUY", "🛒")
+local settingsTab = createTab("SETTINGS", "⚙️")
+
+-- Activate first tab
+if infoTab then
+    infoTab.button.BackgroundColor3 = Color3.fromRGB(60, 120, 180)
+    infoTab.isActive = true
+    currentTab = infoTab
+end
+
+-- === TAB CONTENT ===
+
+-- INFO TAB
+local infoContent1 = createParagraph("🌟 XSAN Fish It Pro Ultimate v2.0", "Selamat datang di XSAN Fish It Pro Ultimate Edition dengan Modern Tab Interface! Script premium dengan fitur terlengkap untuk Fish It!")
+addToTab("INFO", infoContent1)
+
+local infoContent2 = createParagraph("✨ What's New in v2.0", "• Modern Tab-based Interface (NEW!)\n• Mobile Landscape Optimized\n• Enhanced Performance\n• Better Error Handling\n• Improved Analytics\n• Smart Notifications")
+addToTab("INFO", infoContent2)
+
+local infoContent3 = createParagraph("📖 How to Use", "1. Gunakan tab AUTO FISH untuk fishing automation\n2. Tab TELEPORT untuk berpindah lokasi\n3. Tab INVENTORY untuk item management\n4. Tab BUY untuk purchase automation\n5. Tab SETTINGS untuk konfigurasi")
+addToTab("INFO", infoContent3)
+
+local infoContent4 = createParagraph("👨‍💻 Developer Info", "Created by XSAN\nInstagram: @_bangicoo\nGitHub: github.com/codeico\n\nTrusted by thousands of players worldwide!")
+addToTab("INFO", infoContent4)
+
+-- AUTO FISH TAB
+local autoFishContent1 = createParagraph("🎣 Automated Fishing System", "Ultimate fishing automation with smart features and customizable settings.")
+addToTab("AUTO FISH", autoFishContent1)
+
+local mainFishingToggle = createToggle("🎣 Enable Auto Fishing", autoFishing, function(value)
+    autoFishing = value
+    fishing = value
+    
+    if value then
+        Notify("🎣 Auto Fishing", "Started!")
+        task.spawn(function()
+            while autoFishing do
+                pcall(function()
+                    if remotes.Cast then
+                        remotes.Cast:FireServer(castPower)
+                    end
                     
-                    wait(fishingDelay)
-                end
-            end)
-        else
-            Notify("🎣 Auto Fishing", "Stopped!")
-        end
-    end, "main_fishing_toggle")
-})
+                    if autoShaking and remotes.Shake then
+                        wait(math.random(1, 3))
+                        remotes.Shake:FireServer()
+                    end
+                    
+                    if autoReeling and remotes.Reel then
+                        wait(math.random(2, 4))
+                        remotes.Reel:FireServer()
+                    end
+                    
+                    fishingAnalytics.fishCaught = fishingAnalytics.fishCaught + 1
+                end)
+                
+                wait(fishingDelay)
+            end
+        end)
+    else
+        Notify("🎣 Auto Fishing", "Stopped!")
+    end
+end)
+addToTab("AUTO FISH", mainFishingToggle)
 
-AutoFishTab:CreateToggle({
-    Name = "🌊 Auto Shaking",
-    CurrentValue = autoShaking,
-    Callback = CreateSafeCallback(function(value)
-        autoShaking = value
-        Notify("🌊 Auto Shaking", value and "Enabled" or "Disabled")
-    end, "auto_shaking_toggle")
-})
+local autoShakeToggle = createToggle("🌊 Auto Shaking", autoShaking, function(value)
+    autoShaking = value
+    Notify("🌊 Auto Shaking", value and "Enabled" or "Disabled")
+end)
+addToTab("AUTO FISH", autoShakeToggle)
 
-AutoFishTab:CreateToggle({
-    Name = "🎯 Auto Reeling",
-    CurrentValue = autoReeling,
-    Callback = CreateSafeCallback(function(value)
-        autoReeling = value
-        Notify("🎯 Auto Reeling", value and "Enabled" or "Disabled")
-    end, "auto_reeling_toggle")
-})
+local autoReelToggle = createToggle("🎯 Auto Reeling", autoReeling, function(value)
+    autoReeling = value
+    Notify("🎯 Auto Reeling", value and "Enabled" or "Disabled")
+end)
+addToTab("AUTO FISH", autoReelToggle)
 
-AutoFishTab:CreateToggle({
-    Name = "🧠 Smart Casting",
-    CurrentValue = smartCasting,
-    Callback = CreateSafeCallback(function(value)
-        smartCasting = value
-        Notify("🧠 Smart Casting", value and "Enabled" or "Disabled")
-    end, "smart_casting_toggle")
-})
+local smartCastToggle = createToggle("🧠 Smart Casting", smartCasting, function(value)
+    smartCasting = value
+    Notify("🧠 Smart Casting", value and "Enabled" or "Disabled")
+end)
+addToTab("AUTO FISH", smartCastToggle)
 
-AutoFishTab:CreateSlider({
-    Name = "⚡ Fishing Speed",
-    Range = {0.1, 5},
-    Increment = 0.1,
-    CurrentValue = fishingDelay,
-    Callback = CreateSafeCallback(function(value)
-        fishingDelay = value
-        Notify("⚡ Speed Updated", "Delay: " .. value .. "s")
-    end, "fishing_speed_slider")
-})
-
-AutoFishTab:CreateSlider({
-    Name = "💪 Cast Power",
-    Range = {1, 100},
-    Increment = 1,
-    CurrentValue = castPower,
-    Callback = CreateSafeCallback(function(value)
-        castPower = value
-        Notify("💪 Power Updated", "Cast Power: " .. value .. "%")
-    end, "cast_power_slider")
-})
-
--- === TAB 3: TELEPORT ===
-local TeleportTab = Window:CreateTab("🌍 TELEPORT", "🌍")
-
-TeleportTab:CreateParagraph({
-    Title = "🌍 Ultimate Teleportation System",
-    Content = "Teleport instantly to any fishing location or shop. Updated coordinates for all areas!"
-})
+-- TELEPORT TAB
+local teleportContent1 = createParagraph("🌍 Ultimate Teleportation System", "Teleport instantly to any fishing location or shop. Updated coordinates for all areas!")
+addToTab("TELEPORT", teleportContent1)
 
 -- Fish It accurate teleport locations
 local teleportLocations = {
-    -- Main Areas
-    ["🏠 Spawn"] = {x = 1, y = 18, z = 134},
-    ["🏪 Shop (Alex)"] = {x = -28.43, y = 4.50, z = 2891.28},
-    ["🏪 Shop (Joe)"] = {x = 112.01, y = 4.75, z = 2877.32},
-    ["🏪 Shop (Seth)"] = {x = 72.02, y = 4.58, z = 2885.28},
-    ["🎣 Rod Shop (Marc)"] = {x = 454, y = 150, z = 229},
-    ["⚓ Shipwright"] = {x = 343, y = 135, z = 271},
-    ["📦 Storage (Henry)"] = {x = 491, y = 150, z = 272},
-    
-    -- Fishing Spots
-    ["🌊 Ocean (Starter)"] = {x = 0, y = 20, z = 200},
-    ["🏔️ Mountain Lake"] = {x = -1800, y = 150, z = 900},
-    ["🏝️ Coral Reef"] = {x = 500, y = 130, z = -200},
-    ["🌅 Deep Ocean"] = {x = 1000, y = 130, z = 1000},
-    ["❄️ Ice Lake"] = {x = -1200, y = 140, z = -800},
-    ["� Lava Pool"] = {x = 800, y = 160, z = 800},
-    
-    -- Events & Special
-    ["🌟 Isonade Event"] = {x = -1442, y = 135, z = 1006},
-    ["🦈 Great White Event"] = {x = 1082, y = 124, z = -924}
+    {"🏠 Spawn", {x = 1, y = 18, z = 134}},
+    {"🏪 Shop (Alex)", {x = -28.43, y = 4.50, z = 2891.28}},
+    {"🏪 Shop (Joe)", {x = 112.01, y = 4.75, z = 2877.32}},
+    {"🎣 Rod Shop (Marc)", {x = 454, y = 150, z = 229}},
+    {"🌊 Ocean (Starter)", {x = 0, y = 20, z = 200}},
+    {"🏔️ Mountain Lake", {x = -1800, y = 150, z = 900}},
+    {"🏝️ Coral Reef", {x = 500, y = 130, z = -200}},
+    {"🌅 Deep Ocean", {x = 1000, y = 130, z = 1000}},
+    {"❄️ Ice Lake", {x = -1200, y = 140, z = -800}},
+    {"🌟 Isonade Event", {x = -1442, y = 135, z = 1006}},
 }
 
 local function teleportTo(position)
@@ -895,226 +629,79 @@ local function teleportTo(position)
     teleportCooldown = false
 end
 
--- Create teleport buttons
-for locationName, position in pairs(teleportLocations) do
-    TeleportTab:CreateButton({
-        Name = locationName,
-        Callback = CreateSafeCallback(function()
-            teleportTo(position)
-        end, "teleport_" .. locationName)
-    })
+for _, location in pairs(teleportLocations) do
+    local locationName = location[1]
+    local position = location[2]
+    
+    local teleportButton = createButton(locationName, function()
+        teleportTo(position)
+    end)
+    addToTab("TELEPORT", teleportButton)
 end
 
--- Custom teleport
-TeleportTab:CreateInput({
-    Name = "📍 Custom X Coordinate",
-    PlaceholderText = "Enter X coordinate...",
-    RemoveTextAfterFocusLost = false,
-    Callback = CreateSafeCallback(function(text)
-        _G.customX = tonumber(text) or 0
-    end, "custom_x_input")
-})
+-- INVENTORY TAB
+local inventoryContent1 = createParagraph("🎒 Smart Inventory Management", "Automated selling, upgrading, and inventory optimization tools.")
+addToTab("INVENTORY", inventoryContent1)
 
-TeleportTab:CreateInput({
-    Name = "📍 Custom Y Coordinate", 
-    PlaceholderText = "Enter Y coordinate...",
-    RemoveTextAfterFocusLost = false,
-    Callback = CreateSafeCallback(function(text)
-        _G.customY = tonumber(text) or 10
-    end, "custom_y_input")
-})
-
-TeleportTab:CreateInput({
-    Name = "📍 Custom Z Coordinate",
-    PlaceholderText = "Enter Z coordinate...",
-    RemoveTextAfterFocusLost = false,
-    Callback = CreateSafeCallback(function(text)
-        _G.customZ = tonumber(text) or 0
-    end, "custom_z_input")
-})
-
-TeleportTab:CreateButton({
-    Name = "🚀 Teleport to Custom Location",
-    Callback = CreateSafeCallback(function()
-        local x = _G.customX or 0
-        local y = _G.customY or 10
-        local z = _G.customZ or 0
-        
-        teleportTo({x = x, y = y, z = z})
-    end, "custom_teleport_btn")
-})
-
--- === TAB 4: INVENTORY ===
-local InventoryTab = Window:CreateTab("🎒 INVENTORY", "🎒")
-
-InventoryTab:CreateParagraph({
-    Title = "🎒 Smart Inventory Management",
-    Content = "Automated selling, upgrading, and inventory optimization tools."
-})
-
-InventoryTab:CreateToggle({
-    Name = "💰 Auto Sell Fish",
-    CurrentValue = autoSelling,
-    Callback = CreateSafeCallback(function(value)
-        autoSelling = value
-        
-        if value then
-            Notify("💰 Auto Sell", "Started!")
-            task.spawn(function()
-                while autoSelling do
-                    pcall(function()
-                        if remotes.SellFish then
-                            remotes.SellFish:FireServer()
-                            fishingAnalytics.totalValue = fishingAnalytics.totalValue + 100 -- Estimate
-                        end
-                    end)
-                    wait(sellInterval)
-                end
-            end)
-        else
-            Notify("💰 Auto Sell", "Stopped!")
-        end
-    end, "auto_sell_toggle")
-})
-
-InventoryTab:CreateSlider({
-    Name = "⏰ Sell Interval (seconds)",
-    Range = {5, 120},
-    Increment = 5,
-    CurrentValue = sellInterval,
-    Callback = CreateSafeCallback(function(value)
-        sellInterval = value
-        Notify("⏰ Interval Updated", "Selling every " .. value .. " seconds")
-    end, "sell_interval_slider")
-})
-
-local sellMethods = {"Auto", "Specific", "All", "Valuable Only"}
-InventoryTab:CreateDropdown({
-    Name = "🎯 Sell Method",
-    Options = sellMethods,
-    CurrentOption = sellMethod,
-    Callback = CreateSafeCallback(function(option)
-        sellMethod = option
-        Notify("🎯 Sell Method", "Changed to: " .. option)
-    end, "sell_method_dropdown")
-})
-
-InventoryTab:CreateToggle({
-    Name = "🎣 Auto Equip Best Rod",
-    CurrentValue = equipBestRod,
-    Callback = CreateSafeCallback(function(value)
-        equipBestRod = value
-        
-        if value then
-            task.spawn(function()
+local autoSellToggle = createToggle("💰 Auto Sell Fish", autoSelling, function(value)
+    autoSelling = value
+    
+    if value then
+        Notify("💰 Auto Sell", "Started!")
+        task.spawn(function()
+            while autoSelling do
                 pcall(function()
-                    if remotes.EquipRod then
-                        remotes.EquipRod:FireServer("BestRod")
+                    if remotes.SellFish then
+                        remotes.SellFish:FireServer()
+                        fishingAnalytics.totalValue = fishingAnalytics.totalValue + 100
                     end
                 end)
-            end)
-        end
-        
-        Notify("🎣 Auto Equip Rod", value and "Enabled" or "Disabled")
-    end, "equip_rod_toggle")
-})
-
-InventoryTab:CreateToggle({
-    Name = "🪱 Auto Equip Bait",
-    CurrentValue = autoEquipBait,
-    Callback = CreateSafeCallback(function(value)
-        autoEquipBait = value
-        Notify("🪱 Auto Equip Bait", value and "Enabled" or "Disabled")
-    end, "equip_bait_toggle")
-})
-
-InventoryTab:CreateButton({
-    Name = "💎 Sell All Fish Now",
-    Callback = CreateSafeCallback(function()
-        pcall(function()
-            if remotes.SellFish then
-                remotes.SellFish:FireServer()
-                Notify("💎 Sold!", "All fish sold successfully")
-                fishingAnalytics.totalValue = fishingAnalytics.totalValue + 500 -- Estimate
+                wait(sellInterval)
             end
         end)
-    end, "sell_all_btn")
-})
-
--- === TAB 5: ANALYTICS ===
-local AnalyticsTab = Window:CreateTab("📊 ANALYTICS", "📊")
-
-AnalyticsTab:CreateParagraph({
-    Title = "📊 Fishing Analytics & Statistics",
-    Content = "Real-time tracking of your fishing performance, earnings, and efficiency."
-})
-
--- Analytics display (update every 5 seconds)
-local analyticsUpdate = task.spawn(function()
-    while true do
-        task.wait(5)
-        
-        -- Calculate session time
-        local sessionTime = tick() - fishingAnalytics.sessionStart
-        local hours = math.floor(sessionTime / 3600)
-        local minutes = math.floor((sessionTime % 3600) / 60)
-        
-        -- Calculate efficiency
-        if sessionTime > 0 then
-            fishingAnalytics.efficiency = math.floor(fishingAnalytics.fishCaught / (sessionTime / 60))
-        end
-        
-        -- Update UI elements would go here
-        -- For now, just print to console
-        print("XSAN Analytics: Fish Caught:", fishingAnalytics.fishCaught, "Total Value:", fishingAnalytics.totalValue, "Efficiency:", fishingAnalytics.efficiency, "fish/min")
+    else
+        Notify("💰 Auto Sell", "Stopped!")
     end
 end)
+addToTab("INVENTORY", autoSellToggle)
 
-AnalyticsTab:CreateParagraph({
-    Title = "🎯 Session Statistics",
-    Content = "Fish Caught: " .. fishingAnalytics.fishCaught .. "\nTotal Value: $" .. fishingAnalytics.totalValue .. "\nEfficiency: " .. fishingAnalytics.efficiency .. " fish/min\nBest Fish: " .. fishingAnalytics.bestFish.name
-})
+local equipRodToggle = createToggle("🎣 Auto Equip Best Rod", equipBestRod, function(value)
+    equipBestRod = value
+    
+    if value then
+        task.spawn(function()
+            pcall(function()
+                if remotes.EquipRod then
+                    remotes.EquipRod:FireServer("BestRod")
+                end
+            end)
+        end)
+    end
+    
+    Notify("🎣 Auto Equip Rod", value and "Enabled" or "Disabled")
+end)
+addToTab("INVENTORY", equipRodToggle)
 
-AnalyticsTab:CreateButton({
-    Name = "🔄 Reset Analytics",
-    Callback = CreateSafeCallback(function()
-        fishingAnalytics = {
-            fishCaught = 0,
-            totalValue = 0,
-            sessionStart = tick(),
-            bestFish = {name = "None", value = 0},
-            efficiency = 0
-        }
-        Notify("🔄 Reset", "Analytics data cleared!")
-    end, "reset_analytics_btn")
-})
+local sellAllButton = createButton("💎 Sell All Fish Now", function()
+    pcall(function()
+        if remotes.SellFish then
+            remotes.SellFish:FireServer()
+            Notify("💎 Sold!", "All fish sold successfully")
+            fishingAnalytics.totalValue = fishingAnalytics.totalValue + 500
+        end
+    end)
+end)
+addToTab("INVENTORY", sellAllButton)
 
-AnalyticsTab:CreateButton({
-    Name = "📋 Export Data",
-    Callback = CreateSafeCallback(function()
-        local data = HttpService:JSONEncode(fishingAnalytics)
-        setclipboard(data)
-        Notify("📋 Exported", "Data copied to clipboard!")
-    end, "export_data_btn")
-})
-
--- === TAB 6: BUY SYSTEM ===
-local BuySystemTab = Window:CreateTab("🛒 BUY SYSTEM", "🛒")
-
-BuySystemTab:CreateParagraph({
-    Title = "🛒 Smart Buy System Automation",
-    Content = "Automated purchasing, selling, and shop management with intelligent detection of all game purchase events."
-})
+-- BUY SYSTEM TAB
+local buyContent1 = createParagraph("🛒 Smart Buy System Automation", "Automated purchasing, selling, and shop management with intelligent detection of all game purchase events.")
+addToTab("BUY", buyContent1)
 
 -- Buy System Variables
 local autoBuyEnabled = false
 local autoSellItemsEnabled = false
 local autoEquipmentBuy = false
-local smartPurchasing = false
-local buyBudget = 1000
-local minCashThreshold = 500
 
--- Auto Buy Functions
 local function executeRemoteFunction(remoteName, ...)
     pcall(function()
         if remotes[remoteName] then
@@ -1127,399 +714,133 @@ local function executeRemoteFunction(remoteName, ...)
     end)
 end
 
--- Smart Auto Sell Items
-BuySystemTab:CreateToggle({
-    Name = "💰 Auto Sell Items",
-    CurrentValue = autoSellItemsEnabled,
-    Callback = CreateSafeCallback(function(value)
-        autoSellItemsEnabled = value
-        
-        if value then
-            Notify("💰 Auto Sell", "Started selling items automatically!")
-            task.spawn(function()
-                while autoSellItemsEnabled do
-                    pcall(function()
-                        -- Try multiple sell methods detected
-                        executeRemoteFunction("SellItem")
-                        wait(1)
-                        executeRemoteFunction("SellAllItems")
-                    end)
-                    wait(30) -- Sell every 30 seconds
-                end
-            end)
-        else
-            Notify("💰 Auto Sell", "Stopped!")
-        end
-    end, "auto_sell_items_toggle")
-})
+local autoSellItemsToggle = createToggle("💰 Auto Sell Items", autoSellItemsEnabled, function(value)
+    autoSellItemsEnabled = value
+    
+    if value then
+        Notify("💰 Auto Sell", "Started selling items automatically!")
+        task.spawn(function()
+            while autoSellItemsEnabled do
+                pcall(function()
+                    executeRemoteFunction("SellItem")
+                    wait(1)
+                    executeRemoteFunction("SellAllItems")
+                end)
+                wait(30)
+            end
+        end)
+    else
+        Notify("💰 Auto Sell", "Stopped!")
+    end
+end)
+addToTab("BUY", autoSellItemsToggle)
 
--- Auto Equipment Purchase
-BuySystemTab:CreateToggle({
-    Name = "🎣 Auto Buy Equipment",
-    CurrentValue = autoEquipmentBuy,
-    Callback = CreateSafeCallback(function(value)
-        autoEquipmentBuy = value
-        
-        if value then
-            Notify("🎣 Auto Equipment", "Smart equipment purchasing enabled!")
-            task.spawn(function()
-                while autoEquipmentBuy do
-                    pcall(function()
-                        -- Auto buy fishing gear when needed
-                        executeRemoteFunction("PurchaseFishingRod", "BestRod")
-                        wait(5)
-                        executeRemoteFunction("PurchaseBait", "BestBait")
-                        wait(5)
-                        executeRemoteFunction("PurchaseGear", "BestGear")
-                        wait(5)
-                        executeRemoteFunction("PurchaseBoat", "BestBoat")
-                    end)
-                    wait(120) -- Check every 2 minutes
-                end
-            end)
-        else
-            Notify("🎣 Auto Equipment", "Disabled!")
-        end
-    end, "auto_equipment_toggle")
-})
+local autoEquipmentToggle = createToggle("🎣 Auto Buy Equipment", autoEquipmentBuy, function(value)
+    autoEquipmentBuy = value
+    
+    if value then
+        Notify("🎣 Auto Equipment", "Smart equipment purchasing enabled!")
+        task.spawn(function()
+            while autoEquipmentBuy do
+                pcall(function()
+                    executeRemoteFunction("PurchaseFishingRod", "BestRod")
+                    wait(5)
+                    executeRemoteFunction("PurchaseBait", "BestBait")
+                    wait(5)
+                    executeRemoteFunction("PurchaseGear", "BestGear")
+                    wait(5)
+                    executeRemoteFunction("PurchaseBoat", "BestBoat")
+                end)
+                wait(120)
+            end
+        end)
+    else
+        Notify("🎣 Auto Equipment", "Disabled!")
+    end
+end)
+addToTab("BUY", autoEquipmentToggle)
 
--- Smart Purchase Manager
-BuySystemTab:CreateToggle({
-    Name = "🧠 Smart Purchase Manager",
-    CurrentValue = smartPurchasing,
-    Callback = CreateSafeCallback(function(value)
-        smartPurchasing = value
-        
-        if value then
-            Notify("🧠 Smart Purchasing", "AI purchase decisions enabled!")
-            task.spawn(function()
-                while smartPurchasing do
-                    pcall(function()
-                        -- Check if player has enough money before purchasing
-                        local playerStats = LocalPlayer:FindFirstChild("leaderstats")
-                        if playerStats and playerStats:FindFirstChild("Cash") then
-                            local currentCash = playerStats.Cash.Value
-                            
-                            if currentCash > minCashThreshold + buyBudget then
-                                -- Safe to make purchases
-                                executeRemoteFunction("PurchaseWeatherEvent")
-                                wait(2)
-                                executeRemoteFunction("PurchaseSkinCrate")
-                            end
-                        end
-                    end)
-                    wait(60) -- Check every minute
-                end
-            end)
-        else
-            Notify("🧠 Smart Purchasing", "Disabled!")
-        end
-    end, "smart_purchase_toggle")
-})
+local buyRodButton = createButton("🎣 Buy Best Fishing Rod", function()
+    executeRemoteFunction("PurchaseFishingRod", "BestRod")
+    Notify("🎣 Purchase", "Attempting to buy best fishing rod!")
+end)
+addToTab("BUY", buyRodButton)
 
--- Buy Budget Slider
-BuySystemTab:CreateSlider({
-    Name = "💵 Buy Budget",
-    Range = {100, 10000},
-    Increment = 100,
-    CurrentValue = buyBudget,
-    Callback = CreateSafeCallback(function(value)
-        buyBudget = value
-        Notify("💵 Budget Set", "Max spending: $" .. value)
-    end, "buy_budget_slider")
-})
+local buyBaitButton = createButton("🪱 Buy Best Bait", function()
+    executeRemoteFunction("PurchaseBait", "BestBait")
+    Notify("🪱 Purchase", "Attempting to buy best bait!")
+end)
+addToTab("BUY", buyBaitButton)
 
--- Min Cash Threshold
-BuySystemTab:CreateSlider({
-    Name = "🏦 Min Cash Reserve",
-    Range = {0, 5000},
-    Increment = 100,
-    CurrentValue = minCashThreshold,
-    Callback = CreateSafeCallback(function(value)
-        minCashThreshold = value
-        Notify("🏦 Reserve Set", "Keep minimum: $" .. value)
-    end, "cash_threshold_slider")
-})
+local buyBoatButton = createButton("⚓ Buy Best Boat", function()
+    executeRemoteFunction("PurchaseBoat", "BestBoat")
+    Notify("⚓ Purchase", "Attempting to buy best boat!")
+end)
+addToTab("BUY", buyBoatButton)
 
--- Manual Buy Buttons
-BuySystemTab:CreateButton({
-    Name = "🎣 Buy Best Fishing Rod",
-    Callback = CreateSafeCallback(function()
-        executeRemoteFunction("PurchaseFishingRod", "BestRod")
-        Notify("🎣 Purchase", "Attempting to buy best fishing rod!")
-    end, "buy_rod_btn")
-})
+local buyCrateButton = createButton("🎁 Buy Skin Crate", function()
+    executeRemoteFunction("PurchaseSkinCrate")
+    Notify("🎁 Purchase", "Attempting to buy skin crate!")
+end)
+addToTab("BUY", buyCrateButton)
 
-BuySystemTab:CreateButton({
-    Name = "🪱 Buy Best Bait",
-    Callback = CreateSafeCallback(function()
-        executeRemoteFunction("PurchaseBait", "BestBait")
-        Notify("🪱 Purchase", "Attempting to buy best bait!")
-    end, "buy_bait_btn")
-})
+-- SETTINGS TAB
+local settingsContent1 = createParagraph("⚙️ Advanced Settings & Configuration", "Customize your XSAN Fish It Pro experience with advanced options.")
+addToTab("SETTINGS", settingsContent1)
 
-BuySystemTab:CreateButton({
-    Name = "⚓ Buy Best Boat",
-    Callback = CreateSafeCallback(function()
-        executeRemoteFunction("PurchaseBoat", "BestBoat")
-        Notify("⚓ Purchase", "Attempting to buy best boat!")
-    end, "buy_boat_btn")
-})
+local gamepassToggle = createToggle("🎮 Use Gamepass Features", useGamepass, function(value)
+    useGamepass = value
+    Notify("🎮 Gamepass", value and "Enabled" or "Disabled")
+end)
+addToTab("SETTINGS", gamepassToggle)
 
-BuySystemTab:CreateButton({
-    Name = "🎁 Buy Skin Crate",
-    Callback = CreateSafeCallback(function()
-        executeRemoteFunction("PurchaseSkinCrate")
-        Notify("🎁 Purchase", "Attempting to buy skin crate!")
-    end, "buy_crate_btn")
-})
+local shakeDetectionToggle = createToggle("🔍 Enhanced Shake Detection", shakeDetection, function(value)
+    shakeDetection = value
+    Notify("🔍 Shake Detection", value and "Enhanced" or "Normal")
+end)
+addToTab("SETTINGS", shakeDetectionToggle)
 
-BuySystemTab:CreateButton({
-    Name = "💎 Sell All Items Now",
-    Callback = CreateSafeCallback(function()
-        executeRemoteFunction("SellAllItems")
-        Notify("💎 Sold!", "Selling all items now!")
-        fishingAnalytics.totalValue = fishingAnalytics.totalValue + 1000 -- Estimate
-    end, "sell_all_now_btn")
-})
+local mobileTipsButton = createButton("📱 Show Mobile Tips", function()
+    Notify("📱 Mobile Tips", "• Use landscape mode for best experience\n• Tap and hold to drag the interface\n• Swipe to navigate tabs\n• Pinch to zoom if needed")
+end)
+addToTab("SETTINGS", mobileTipsButton)
 
--- Weather Event Purchase
-BuySystemTab:CreateButton({
-    Name = "🌦️ Buy Weather Event",
-    Callback = CreateSafeCallback(function()
-        executeRemoteFunction("PurchaseWeatherEvent")
-        Notify("🌦️ Weather", "Attempting to purchase weather event!")
-    end, "buy_weather_btn")
-})
+local buyDetectorButton = createButton("🛒 Enhanced Buy System Detector", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/donitono/part2/main/buy_system_detector_enhanced.lua"))()
+    Notify("🛒 Buy Detector", "Enhanced buy system detector loaded!")
+end)
+addToTab("SETTINGS", buyDetectorButton)
 
--- Gamepass Purchase
-BuySystemTab:CreateButton({
-    Name = "🎫 Prompt Gamepass Purchase",
-    Callback = CreateSafeCallback(function()
-        executeRemoteFunction("PromptGamePassPurchase")
-        Notify("🎫 Gamepass", "Gamepass purchase prompt opened!")
-    end, "gamepass_btn")
-})
+local toolsInterfaceButton = createButton("🔧 Advanced Tools Interface", function()
+    loadstring(game:HttpGet("https://raw.githubusercontent.com/donitono/part2/main/unified_enhanced_detectors.lua"))()
+    Notify("🔧 Tools Loaded", "Advanced tools interface loaded!")
+end)
+addToTab("SETTINGS", toolsInterfaceButton)
 
--- === TAB 7: SETTINGS ===
-local SettingsTab = Window:CreateTab("⚙️ SETTINGS", "⚙️")
+local emergencyStopButton = createButton("🆘 Emergency Stop All", function()
+    autoFishing = false
+    fishing = false
+    autoShaking = false
+    autoReeling = false
+    autoSelling = false
+    autoCasting = false
+    autoUpgrading = false
+    autoBuyEnabled = false
+    autoSellItemsEnabled = false
+    autoEquipmentBuy = false
+    
+    Notify("🆘 Emergency Stop", "All automation stopped!")
+end)
+addToTab("SETTINGS", emergencyStopButton)
 
-SettingsTab:CreateParagraph({
-    Title = "⚙️ Advanced Settings & Configuration",
-    Content = "Customize your XSAN Fish It Pro experience with advanced options."
-})
-
-SettingsTab:CreateToggle({
-    Name = "🎮 Use Gamepass Features",
-    CurrentValue = useGamepass,
-    Callback = CreateSafeCallback(function(value)
-        useGamepass = value
-        Notify("🎮 Gamepass", value and "Enabled" or "Disabled")
-    end, "gamepass_toggle")
-})
-
-SettingsTab:CreateToggle({
-    Name = "🔍 Enhanced Shake Detection",
-    CurrentValue = shakeDetection,
-    Callback = CreateSafeCallback(function(value)
-        shakeDetection = value
-        Notify("🔍 Shake Detection", value and "Enhanced" or "Normal")
-    end, "shake_detection_toggle")
-})
-
-SettingsTab:CreateButton({
-    Name = "📱 Show Mobile Tips",
-    Callback = CreateSafeCallback(function()
-        Notify("📱 Mobile Tips", "• Use landscape mode for best experience\n• Tap and hold to drag the interface\n• Swipe to navigate tabs\n• Pinch to zoom if needed")
-    end, "mobile_tips_btn")
-})
-
-SettingsTab:CreateButton({
-    Name = "� Enhanced Buy System Detector",
-    Callback = CreateSafeCallback(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/donitono/part2/main/buy_system_detector.lua"))()
-        Notify("🛒 Buy Detector", "Enhanced buy system detector loaded!")
-    end, "buy_detector_btn")
-})
-
-SettingsTab:CreateButton({
-    Name = "�🔧 Advanced Tools Interface",
-    Callback = CreateSafeCallback(function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/donitono/part2/main/unified_tools_interface.lua"))()
-        Notify("🔧 Tools Loaded", "Advanced tools interface loaded!")
-    end, "tools_interface_btn")
-})
-
-SettingsTab:CreateButton({
-    Name = "🆘 Emergency Stop All",
-    Callback = CreateSafeCallback(function()
-        -- Stop all automation
-        autoFishing = false
-        fishing = false
-        autoShaking = false
-        autoReeling = false
-        autoSelling = false
-        autoCasting = false
-        autoUpgrading = false
-        
-        Notify("🆘 Emergency Stop", "All automation stopped!")
-    end, "emergency_stop_btn")
-})
-
-SettingsTab:CreateButton({
-    Name = "🗑️ Destroy Interface",
-    Callback = CreateSafeCallback(function()
-        game.Players.LocalPlayer.PlayerGui.RayfieldLibrary:Destroy()
-    end, "destroy_ui_btn")
-})
+local destroyButton = createButton("🗑️ Destroy Interface", function()
+    ScreenGui:Destroy()
+end)
+addToTab("SETTINGS", destroyButton)
 
 -- Final setup
 print("XSAN: Modern UI setup complete!")
 Notify("✅ Ready!", "XSAN Fish It Pro Ultimate v2.0 loaded successfully! Use the tab navigation for best experience.")
-
--- ═══════════════════════════════════════════════════════════════
--- FLOATING TOGGLE BUTTON - Hide/Show UI
--- ═══════════════════════════════════════════════════════════════
-
-print("XSAN: Creating floating toggle button...")
-task.spawn(function()
-    task.wait(1) -- Wait for UI to fully load
-    
-    local Players = game:GetService("Players")
-    local UserInputService = game:GetService("UserInputService")
-    local TweenService = game:GetService("TweenService")
-    local LocalPlayer = Players.LocalPlayer
-    local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
-    
-    -- Create floating button ScreenGui
-    local FloatingButtonGui = Instance.new("ScreenGui")
-    FloatingButtonGui.Name = "XSAN_FloatingButton"
-    FloatingButtonGui.ResetOnSpawn = false
-    FloatingButtonGui.IgnoreGuiInset = true
-    FloatingButtonGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
-    
-    -- Try to parent to CoreGui first, then fallback to PlayerGui
-    local success = pcall(function()
-        FloatingButtonGui.Parent = game.CoreGui
-    end)
-    if not success then
-        FloatingButtonGui.Parent = PlayerGui
-    end
-    
-    -- Create floating button
-    local FloatingButton = Instance.new("TextButton")
-    FloatingButton.Name = "ToggleButton"
-    FloatingButton.Size = UDim2.new(0, isMobile and 70 or 60, 0, isMobile and 70 or 60)
-    FloatingButton.Position = UDim2.new(0, 20, 0.5, -35)
-    FloatingButton.BackgroundColor3 = Color3.fromRGB(70, 130, 200)
-    FloatingButton.BorderSizePixel = 0
-    FloatingButton.Text = "🎣"
-    FloatingButton.TextColor3 = Color3.fromRGB(255, 255, 255)
-    FloatingButton.TextScaled = true
-    FloatingButton.Font = Enum.Font.SourceSansBold
-    FloatingButton.Parent = FloatingButtonGui
-    
-    -- Add UICorner for rounded button
-    local ButtonCorner = Instance.new("UICorner")
-    ButtonCorner.CornerRadius = UDim.new(0.5, 0) -- Perfect circle
-    ButtonCorner.Parent = FloatingButton
-    
-    -- Add UIStroke for better visibility
-    local ButtonStroke = Instance.new("UIStroke")
-    ButtonStroke.Color = Color3.fromRGB(255, 255, 255)
-    ButtonStroke.Thickness = 2
-    ButtonStroke.Transparency = 0.3
-    ButtonStroke.Parent = FloatingButton
-    
-    -- Variables
-    local isUIVisible = true
-    local dragging = false
-    local dragInput
-    local dragStart
-    local startPos
-    
-    -- Get Rayfield GUI reference
-    local function getRayfieldGui()
-        return LocalPlayer.PlayerGui:FindFirstChild("RayfieldLibrary") or game.CoreGui:FindFirstChild("RayfieldLibrary")
-    end
-    
-    -- Toggle UI visibility function
-    local function toggleUI()
-        local rayfieldGui = getRayfieldGui()
-        if rayfieldGui then
-            isUIVisible = not isUIVisible
-            
-            -- Update button appearance
-            if isUIVisible then
-                FloatingButton.Text = "🎣"
-                FloatingButton.BackgroundColor3 = Color3.fromRGB(70, 130, 200)
-                rayfieldGui.Enabled = true
-                
-                -- Animate show
-                rayfieldGui.Main.BackgroundTransparency = 1
-                TweenService:Create(rayfieldGui.Main, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
-                    BackgroundTransparency = 0
-                }):Play()
-                
-                Notify("UI Toggle", "XSAN Fish It Pro Modern UI shown!")
-            else
-                FloatingButton.Text = "👁"
-                FloatingButton.BackgroundColor3 = Color3.fromRGB(200, 100, 100)
-                
-                -- Animate hide
-                TweenService:Create(rayfieldGui.Main, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
-                    BackgroundTransparency = 1
-                }):Play()
-                
-                task.wait(0.3)
-                rayfieldGui.Enabled = false
-                Notify("UI Toggle", "UI hidden! Use floating button to show.")
-            end
-        end
-    end
-    
-    -- Make button draggable
-    local function updateDrag(input)
-        local delta = input.Position - dragStart
-        FloatingButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
-    end
-    
-    FloatingButton.InputBegan:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = true
-            dragStart = input.Position
-            startPos = FloatingButton.Position
-        end
-    end)
-    
-    UserInputService.InputChanged:Connect(function(input)
-        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
-            updateDrag(input)
-        end
-    end)
-    
-    UserInputService.InputEnded:Connect(function(input)
-        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
-            dragging = false
-        end
-    end)
-    
-    -- Click to toggle (only if not dragging significantly)
-    FloatingButton.MouseButton1Click:Connect(function()
-        if not dragging then
-            toggleUI()
-        end
-    end)
-    
-    -- Keyboard shortcut for toggle (H key)
-    UserInputService.InputBegan:Connect(function(input, gameProcessed)
-        if not gameProcessed and input.KeyCode == Enum.KeyCode.H then
-            toggleUI()
-        end
-    end)
-    
-    print("XSAN: Floating toggle button created successfully!")
-end)
 
 -- Auto-detection and smart features
 task.spawn(function()
@@ -1527,8 +848,7 @@ task.spawn(function()
     
     -- Auto-detect game mode
     pcall(function()
-        local gameMode = "Unknown"
-        -- Add game detection logic here
+        local gameMode = "Fish It Detected"
         Notify("🎮 Game Detected", "Mode: " .. gameMode)
     end)
     
