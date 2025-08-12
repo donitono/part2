@@ -726,8 +726,19 @@ if tpFolder then
     end
 else
     -- Fallback to hardcoded coordinates if workspace folder not found
-    print("XSAN: Island folder not found, using fallback coordinates")
+    print("XSAN: Island folder not found, using updated fallback coordinates")
     TeleportLocations.Islands = {
+        -- Updated island coordinates from detector
+        ["Kohana Volcano"] = CFrame.new(-594.97, 396.65, 149.11),
+        ["Crater Island"] = CFrame.new(1010.01, 252.00, 5078.45),
+        ["Kohana"] = CFrame.new(-650.97, 208.69, 711.11),
+        ["Lost Isle"] = CFrame.new(-3618.16, 240.84, -1317.46),
+        ["Stingray Shores"] = CFrame.new(45.28, 252.56, 2987.11),
+        ["Esoteric Depths"] = CFrame.new(1944.78, 393.56, 1371.36),
+        ["Weather Machine"] = CFrame.new(-1488.51, 83.17, 1876.30),
+        ["Tropical Grove"] = CFrame.new(-2095.34, 197.20, 3718.08),
+        ["Coral Reefs"] = CFrame.new(-3023.97, 337.81, 2195.61),
+        -- Legacy coordinates (backup)
         ["Moosewood"] = CFrame.new(389, 137, 264),
         ["Ocean"] = CFrame.new(1082, 124, -924),
         ["Snowcap Island"] = CFrame.new(2648, 140, 2522),
