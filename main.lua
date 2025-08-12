@@ -219,6 +219,220 @@ print("XSAN: UtilityTab created")
 
 print("XSAN: All tabs created successfully!")
 
+-- ═══════════════════════════════════════════════════════════════
+-- FLOATING TOGGLE BUTTON - Hide/Show UI
+-- ═══════════════════════════════════════════════════════════════
+
+print("XSAN: Creating floating toggle button...")
+task.spawn(function()
+    task.wait(1) -- Wait for UI to fully load
+    
+    local Players = game:GetService("Players")
+    local UserInputService = game:GetService("UserInputService")
+    local TweenService = game:GetService("TweenService")
+    local LocalPlayer = Players.LocalPlayer
+    local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+    
+    -- Create floating button ScreenGui
+    local FloatingButtonGui = Instance.new("ScreenGui")
+    FloatingButtonGui.Name = "XSAN_FloatingButton"
+    FloatingButtonGui.ResetOnSpawn = false
+    FloatingButtonGui.IgnoreGuiInset = true
+    FloatingButtonGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    -- Try to parent to CoreGui first, then fallback to PlayerGui
+    local success = pcall(function()
+        FloatingButtonGui.Parent = game.CoreGui
+    end)
+    if not success then
+        FloatingButtonGui.Parent = PlayerGui
+    end
+    
+    -- Create floating button
+    local FloatingButton = Instance.new("TextButton")
+    FloatingButton.Name = "ToggleButton"
+    FloatingButton.Size = UDim2.new(0, isMobile and 70 or 60, 0, isMobile and 70 or 60)
+    FloatingButton.Position = UDim2.new(0, 20, 0.5, -35)
+    FloatingButton.BackgroundColor3 = Color3.fromRGB(70, 130, 200)
+    FloatingButton.BorderSizePixel = 0
+    FloatingButton.Text = "🎣"
+    FloatingButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    FloatingButton.TextScaled = true
+    FloatingButton.Font = Enum.Font.SourceSansBold
+    FloatingButton.Parent = FloatingButtonGui
+    
+    -- Add UICorner for rounded button
+    local ButtonCorner = Instance.new("UICorner")
+    ButtonCorner.CornerRadius = UDim.new(0.5, 0) -- Perfect circle
+    ButtonCorner.Parent = FloatingButton
+    
+    -- Add UIStroke for better visibility
+    local ButtonStroke = Instance.new("UIStroke")
+    ButtonStroke.Color = Color3.fromRGB(255, 255, 255)
+    ButtonStroke.Thickness = 2
+    ButtonStroke.Transparency = 0.3
+    ButtonStroke.Parent = FloatingButton
+    
+    -- Add shadow effect
+    local ButtonShadow = Instance.new("Frame")
+    ButtonShadow.Name = "Shadow"
+    ButtonShadow.Size = UDim2.new(1, 4, 1, 4)
+    ButtonShadow.Position = UDim2.new(0, 2, 0, 2)
+    ButtonShadow.BackgroundColor3 = Color3.fromRGB(0, 0, 0)
+    ButtonShadow.BackgroundTransparency = 0.7
+    ButtonShadow.BorderSizePixel = 0
+    ButtonShadow.ZIndex = FloatingButton.ZIndex - 1
+    ButtonShadow.Parent = FloatingButton
+    
+    local ShadowCorner = Instance.new("UICorner")
+    ShadowCorner.CornerRadius = UDim.new(0.5, 0)
+    ShadowCorner.Parent = ButtonShadow
+    
+    -- Variables
+    local isUIVisible = true
+    local dragging = false
+    local dragInput
+    local dragStart
+    local startPos
+    
+    -- Get Rayfield GUI reference
+    local function getRayfieldGui()
+        return LocalPlayer.PlayerGui:FindFirstChild("RayfieldLibrary") or game.CoreGui:FindFirstChild("RayfieldLibrary")
+    end
+    
+    -- Toggle UI visibility function
+    local function toggleUI()
+        local rayfieldGui = getRayfieldGui()
+        if rayfieldGui then
+            isUIVisible = not isUIVisible
+            
+            -- Update button appearance
+            if isUIVisible then
+                FloatingButton.Text = "🎣"
+                FloatingButton.BackgroundColor3 = Color3.fromRGB(70, 130, 200)
+                rayfieldGui.Enabled = true
+                
+                -- Animate show
+                rayfieldGui.Main.BackgroundTransparency = 1
+                TweenService:Create(rayfieldGui.Main, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                    BackgroundTransparency = 0
+                }):Play()
+                
+                NotifySuccess("UI Toggle", "XSAN Fish It Pro UI shown!")
+            else
+                FloatingButton.Text = "👁"
+                FloatingButton.BackgroundColor3 = Color3.fromRGB(200, 100, 100)
+                
+                -- Animate hide
+                TweenService:Create(rayfieldGui.Main, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+                    BackgroundTransparency = 1
+                }):Play()
+                
+                task.wait(0.3)
+                rayfieldGui.Enabled = false
+                NotifyInfo("UI Toggle", "UI hidden! Use floating button to show.")
+            end
+            
+            -- Button feedback animation
+            TweenService:Create(FloatingButton, TweenInfo.new(0.1, Enum.EasingStyle.Back), {
+                Size = UDim2.new(0, (isMobile and 70 or 60) * 1.1, 0, (isMobile and 70 or 60) * 1.1)
+            }):Play()
+            
+            task.wait(0.1)
+            TweenService:Create(FloatingButton, TweenInfo.new(0.2, Enum.EasingStyle.Back), {
+                Size = UDim2.new(0, isMobile and 70 or 60, 0, isMobile and 70 or 60)
+            }):Play()
+        end
+    end
+    
+    -- Make button draggable
+    local function updateDrag(input)
+        local delta = input.Position - dragStart
+        FloatingButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+    
+    FloatingButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = FloatingButton.Position
+            
+            -- Visual feedback for drag start
+            TweenService:Create(FloatingButton, TweenInfo.new(0.1), {
+                BackgroundColor3 = Color3.fromRGB(100, 160, 230)
+            }):Play()
+            
+            input.Changed:Connect(function()
+                if input.UserInputState == Enum.UserInputState.End then
+                    dragging = false
+                    -- Reset color
+                    TweenService:Create(FloatingButton, TweenInfo.new(0.2), {
+                        BackgroundColor3 = isUIVisible and Color3.fromRGB(70, 130, 200) or Color3.fromRGB(200, 100, 100)
+                    }):Play()
+                end
+            end)
+        end
+    end)
+    
+    FloatingButton.InputChanged:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+            dragInput = input
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if input == dragInput and dragging then
+            updateDrag(input)
+        end
+    end)
+    
+    -- Click to toggle (only if not dragging significantly)
+    FloatingButton.MouseButton1Click:Connect(function()
+        if not dragging then
+            toggleUI()
+        end
+    end)
+    
+    -- Hover effects for desktop
+    if not isMobile then
+        FloatingButton.MouseEnter:Connect(function()
+            if not dragging then
+                TweenService:Create(FloatingButton, TweenInfo.new(0.2), {
+                    Size = UDim2.new(0, 65, 0, 65),
+                    BackgroundColor3 = isUIVisible and Color3.fromRGB(90, 150, 220) or Color3.fromRGB(220, 120, 120)
+                }):Play()
+                TweenService:Create(ButtonStroke, TweenInfo.new(0.2), {
+                    Transparency = 0.1
+                }):Play()
+            end
+        end)
+        
+        FloatingButton.MouseLeave:Connect(function()
+            if not dragging then
+                TweenService:Create(FloatingButton, TweenInfo.new(0.2), {
+                    Size = UDim2.new(0, 60, 0, 60),
+                    BackgroundColor3 = isUIVisible and Color3.fromRGB(70, 130, 200) or Color3.fromRGB(200, 100, 100)
+                }):Play()
+                TweenService:Create(ButtonStroke, TweenInfo.new(0.2), {
+                    Transparency = 0.3
+                }):Play()
+            end
+        end)
+    end
+    
+    -- Keyboard shortcut for toggle (H key)
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if not gameProcessed and input.KeyCode == Enum.KeyCode.H then
+            toggleUI()
+        end
+    end)
+    
+    print("XSAN: Floating toggle button created successfully!")
+    print("XSAN: - Click button to hide/show UI")
+    print("XSAN: - Drag button to move position")
+    print("XSAN: - Press 'H' key to toggle UI")
+end)
+
 -- Load Remotes
 print("XSAN: Loading remotes...")
 local net, rodRemote, miniGameRemote, finishRemote, equipRemote
