@@ -110,6 +110,39 @@ local Window = Rayfield:CreateWindow({
 
 print("XSAN: Window created successfully!")
 
+-- Fix scrolling issues for Rayfield UI
+print("XSAN: Applying scrolling fixes...")
+task.spawn(function()
+    task.wait(1) -- Wait for UI to fully load
+    
+    local function fixScrollingFrames()
+        local rayfieldGui = game.Players.LocalPlayer.PlayerGui:FindFirstChild("RayfieldLibrary") or game.CoreGui:FindFirstChild("RayfieldLibrary")
+        if rayfieldGui then
+            for _, descendant in pairs(rayfieldGui:GetDescendants()) do
+                if descendant:IsA("ScrollingFrame") then
+                    -- Enable proper scrolling
+                    descendant.ScrollingEnabled = true
+                    descendant.ScrollBarThickness = 8
+                    descendant.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+                    
+                    -- Auto canvas size if supported
+                    if descendant:FindFirstChild("UIListLayout") then
+                        descendant.AutomaticCanvasSize = Enum.AutomaticSize.Y
+                        descendant.CanvasSize = UDim2.new(0, 0, 0, 0)
+                    end
+                    
+                    print("XSAN: Fixed scrolling for", descendant.Name)
+                end
+            end
+        end
+    end
+    
+    -- Apply fixes multiple times to ensure they stick
+    fixScrollingFrames()
+    task.wait(2)
+    fixScrollingFrames()
+end)
+
 -- Ultimate tabs with all features
 print("XSAN: Creating tabs...")
 local InfoTab = Window:CreateTab("INFO", "crown")
@@ -522,6 +555,44 @@ InfoTab:CreateButton({
             NotifyInfo("Social Media", "GitHub: github.com/codeico")
         end
     end, "github")
+})
+
+InfoTab:CreateButton({ 
+    Name = "Fix UI Scrolling", 
+    Callback = CreateSafeCallback(function() 
+        local function fixScrollingFrames()
+            local rayfieldGui = game.Players.LocalPlayer.PlayerGui:FindFirstChild("RayfieldLibrary") or game.CoreGui:FindFirstChild("RayfieldLibrary")
+            if rayfieldGui then
+                local fixed = 0
+                for _, descendant in pairs(rayfieldGui:GetDescendants()) do
+                    if descendant:IsA("ScrollingFrame") then
+                        -- Enable proper scrolling
+                        descendant.ScrollingEnabled = true
+                        descendant.ScrollBarThickness = 8
+                        descendant.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+                        descendant.ScrollBarImageTransparency = 0.3
+                        
+                        -- Auto canvas size if supported
+                        if descendant:FindFirstChild("UIListLayout") then
+                            descendant.AutomaticCanvasSize = Enum.AutomaticSize.Y
+                            descendant.CanvasSize = UDim2.new(0, 0, 0, 0)
+                        end
+                        
+                        -- Enable mouse wheel scrolling
+                        descendant.Active = true
+                        descendant.Selectable = true
+                        
+                        fixed = fixed + 1
+                    end
+                end
+                NotifySuccess("UI Fix", "Fixed scrolling for " .. fixed .. " elements. You can now scroll through tabs!")
+            else
+                NotifyError("UI Fix", "Rayfield GUI not found")
+            end
+        end
+        
+        fixScrollingFrames()
+    end, "fix_scrolling")
 })
 
 print("XSAN: INFO tab completed successfully!")
