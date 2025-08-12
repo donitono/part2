@@ -217,12 +217,24 @@ local function analyzeCurrentFeatures()
     end
     
     analysis[#analysis + 1] = "📊 Total RemoteEvents detected: " .. #remoteEvents
-    analysis[#analysis + 1] = "🎣 Fishing events: " .. #table.filter(remoteEvents, function(name)
-        return string.find(string.lower(name), "fish") or string.find(string.lower(name), "rod")
-    end)
-    analysis[#analysis + 1] = "🛒 Shop events: " .. #table.filter(remoteEvents, function(name)
-        return string.find(string.lower(name), "sell") or string.find(string.lower(name), "buy")
-    end)
+    
+    -- Count fishing events
+    local fishingEvents = 0
+    for _, name in pairs(remoteEvents) do
+        if string.find(string.lower(name), "fish") or string.find(string.lower(name), "rod") then
+            fishingEvents = fishingEvents + 1
+        end
+    end
+    analysis[#analysis + 1] = "🎣 Fishing events: " .. fishingEvents
+    
+    -- Count shop events
+    local shopEvents = 0
+    for _, name in pairs(remoteEvents) do
+        if string.find(string.lower(name), "sell") or string.find(string.lower(name), "buy") then
+            shopEvents = shopEvents + 1
+        end
+    end
+    analysis[#analysis + 1] = "🛒 Shop events: " .. shopEvents
     analysis[#analysis + 1] = ""
     
     -- Analyze game structure
@@ -433,72 +445,114 @@ end
 
 -- Tab switching function
 local function switchTab(tabName)
+    if not tabButtons or not contentText then
+        warn("Feature Analyzer: UI components not ready")
+        return
+    end
+    
     for name, button in pairs(tabButtons) do
-        button.BackgroundColor3 = name == tabName and Color3.fromRGB(60, 120, 180) or Color3.fromRGB(40, 40, 40)
+        if button and button.BackgroundColor3 then
+            button.BackgroundColor3 = name == tabName and Color3.fromRGB(60, 120, 180) or Color3.fromRGB(40, 40, 40)
+        end
     end
     
     currentTab = tabName
     
-    if tabName == "Analysis" then
-        contentText.Text = analyzeCurrentFeatures()
-    elseif tabName == "Suggestions" then
-        contentText.Text = generateSuggestions()
-    elseif tabName == "Updates" then
-        contentText.Text = generateUpdates()
-    elseif tabName == "Code Gen" then
-        contentText.Text = generateCode()
-    end
-    
-    contentFrame.CanvasSize = UDim2.new(0, 0, 0, contentText.TextBounds.Y + 20)
+    pcall(function()
+        if tabName == "Analysis" then
+            contentText.Text = analyzeCurrentFeatures()
+        elseif tabName == "Suggestions" then
+            contentText.Text = generateSuggestions()
+        elseif tabName == "Updates" then
+            contentText.Text = generateUpdates()
+        elseif tabName == "Code Gen" then
+            contentText.Text = generateCode()
+        end
+        
+        if contentFrame and contentFrame.CanvasSize then
+            contentFrame.CanvasSize = UDim2.new(0, 0, 0, contentText.TextBounds.Y + 20)
+        end
+    end)
 end
 
 -- Button events
-for tabName, button in pairs(tabButtons) do
-    button.MouseButton1Click:Connect(function()
-        switchTab(tabName)
+for tabName, button in pairs(tabButtons or {}) do
+    if button and button.MouseButton1Click then
+        button.MouseButton1Click:Connect(function()
+            pcall(function()
+                switchTab(tabName)
+            end)
+        end)
+    end
+end
+
+if analyzeBtn and analyzeBtn.MouseButton1Click then
+    analyzeBtn.MouseButton1Click:Connect(function()
+        pcall(function()
+            analyzeBtn.Text = "🔄 Analyzing..."
+            switchTab(currentTab)
+            task.spawn(function()
+                task.wait(1)
+                if analyzeBtn then
+                    analyzeBtn.Text = "🔄 Analyze"
+                end
+            end)
+        end)
     end)
 end
 
-analyzeBtn.MouseButton1Click:Connect(function()
-    analyzeBtn.Text = "🔄 Analyzing..."
-    switchTab(currentTab)
-    task.spawn(function()
-        task.wait(1)
-        analyzeBtn.Text = "🔄 Analyze"
+if exportBtn and exportBtn.MouseButton1Click then
+    exportBtn.MouseButton1Click:Connect(function()
+        pcall(function()
+            local exportText = contentText and contentText.Text or "No content"
+            if setclipboard then
+                setclipboard(exportText)
+                exportBtn.Text = "📋 Copied!"
+            else
+                print(exportText)
+                exportBtn.Text = "📋 Printed"
+            end
+            task.spawn(function()
+                task.wait(1)
+                if exportBtn then
+                    exportBtn.Text = "📋 Export"
+                end
+            end)
+        end)
     end)
-end)
+end
 
-exportBtn.MouseButton1Click:Connect(function()
-    local exportText = contentText.Text
-    if setclipboard then
-        setclipboard(exportText)
-        exportBtn.Text = "📋 Copied!"
-    else
-        print(exportText)
-        exportBtn.Text = "📋 Printed"
-    end
-    task.spawn(function()
-        task.wait(1)
-        exportBtn.Text = "📋 Export"
+if generateBtn and generateBtn.MouseButton1Click then
+    generateBtn.MouseButton1Click:Connect(function()
+        pcall(function()
+            generateBtn.Text = "⚡ Generating..."
+            switchTab("Code Gen")
+            task.spawn(function()
+                task.wait(1)
+                if generateBtn then
+                    generateBtn.Text = "⚡ Generate"
+                end
+            end)
+        end)
     end)
-end)
+end
 
-generateBtn.MouseButton1Click:Connect(function()
-    generateBtn.Text = "⚡ Generating..."
-    switchTab("Code Gen")
-    task.spawn(function()
-        task.wait(1)
-        generateBtn.Text = "⚡ Generate"
+if closeBtn and closeBtn.MouseButton1Click then
+    closeBtn.MouseButton1Click:Connect(function()
+        pcall(function()
+            if screen then
+                screen:Destroy()
+            end
+            print("Feature Analyzer closed")
+        end)
     end)
-end)
+end
 
-closeBtn.MouseButton1Click:Connect(function()
-    screen:Destroy()
-    print("Feature Analyzer closed")
+-- Initialize with error protection
+pcall(function()
+    task.wait(0.1) -- Small delay to ensure UI is ready
+    switchTab("Analysis")
 end)
-
--- Initialize
-switchTab("Analysis")
 
 print("🔍 Feature Analyzer & Updater started!")
 print("📊 Analyzing current features and generating improvement suggestions")
