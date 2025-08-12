@@ -76,16 +76,16 @@ function Rayfield:CreateWindow(Settings)
 	Main.Active = true
 	Main.Draggable = true
 	
-	-- Better size untuk mobile landscape - tidak terlalu ke atas
+	-- Ukuran yang lebih kecil dan proporsional
 	if isMobile and isLandscape then
-		Main.Size = UDim2.new(0, 650, 0, 360) -- Lebih besar dan proporsional
-		Main.Position = UDim2.new(0.5, -325, 0.5, -180) -- Lebih centered
+		Main.Size = UDim2.new(0, 580, 0, 340) -- Lebih kecil untuk landscape
+		Main.Position = UDim2.new(0.5, -290, 0.5, -170) -- Centered
 	elseif isMobile then
-		Main.Size = UDim2.new(0, 350, 0, 450)
-		Main.Position = UDim2.new(0.5, -175, 0.5, -225)
+		Main.Size = UDim2.new(0, 320, 0, 420) -- Kecil untuk portrait
+		Main.Position = UDim2.new(0.5, -160, 0.5, -210)
 	else
-		Main.Size = UDim2.new(0, 700, 0, 450) -- Desktop lebih besar
-		Main.Position = UDim2.new(0.5, -350, 0.5, -225)
+		Main.Size = UDim2.new(0, 600, 0, 400) -- Desktop normal size
+		Main.Position = UDim2.new(0.5, -300, 0.5, -200)
 	end
 	
 	Main.Parent = RayfieldLibrary

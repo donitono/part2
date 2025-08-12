@@ -276,7 +276,7 @@ task.spawn(function()
     end
 end)
 
--- === TAB 1: INFO & QUICK START ===
+-- === TAB 1: INFO (HANYA INFO, TIDAK ADA FITUR) ===
 local InfoTab = Window:CreateTab("📋 INFO", "🏠")
 
 InfoTab:CreateParagraph({
@@ -290,12 +290,30 @@ InfoTab:CreateParagraph({
 })
 
 InfoTab:CreateParagraph({
+    Title = "📖 How to Use",
+    Content = "1. Gunakan tab AUTO FISH untuk fishing automation\n2. Tab TELEPORT untuk berpindah lokasi\n3. Tab INVENTORY untuk item management\n4. Tab ANALYTICS untuk statistik\n5. Tab SETTINGS untuk konfigurasi"
+})
+
+InfoTab:CreateParagraph({
+    Title = "👨‍💻 Developer Info",
+    Content = "Created by XSAN\nInstagram: @_bangicoo\nGitHub: github.com/codeico\n\nTrusted by thousands of players worldwide!"
+})
+
+-- === TAB 2: AUTO FISH (SEMUA FITUR FISHING DI SINI) ===
+local AutoFishTab = Window:CreateTab("🎣 AUTO FISH", "🎣")
+
+AutoFishTab:CreateParagraph({
+    Title = "🎣 Automated Fishing System",
+    Content = "Ultimate fishing automation with smart features and customizable settings."
+})
+
+AutoFishTab:CreateParagraph({
     Title = "🔥 Quick Start Presets",
     Content = "Pilih preset sesuai kebutuhan Anda. Setiap preset sudah dioptimalkan untuk hasil terbaik!"
 })
 
 local presetOptions = {"Balanced", "Speed Focus", "Value Focus", "Casual", "Hardcore"}
-InfoTab:CreateDropdown({
+AutoFishTab:CreateDropdown({
     Name = "🎯 Select Preset",
     Options = presetOptions,
     CurrentOption = selectedPreset,
@@ -338,7 +356,7 @@ InfoTab:CreateDropdown({
     end, "preset_dropdown")
 })
 
-InfoTab:CreateButton({
+AutoFishTab:CreateButton({
     Name = "🚀 Apply Selected Preset",
     Callback = CreateSafeCallback(function()
         -- Apply the currently selected preset
@@ -372,19 +390,6 @@ InfoTab:CreateButton({
         
         Notify("✅ Preset Applied", selectedPreset .. " settings activated!")
     end, "apply_preset_btn")
-})
-
-InfoTab:CreateParagraph({
-    Title = "👨‍💻 Developer Info",
-    Content = "Created by XSAN\nInstagram: @_bangicoo\nGitHub: github.com/codeico\n\nTrusted by thousands of players worldwide!"
-})
-
--- === TAB 2: AUTO FISH ===
-local AutoFishTab = Window:CreateTab("🎣 AUTO FISH", "🎣")
-
-AutoFishTab:CreateParagraph({
-    Title = "🎣 Automated Fishing System",
-    Content = "Ultimate fishing automation with smart features and customizable settings."
 })
 
 local mainFishingToggle = AutoFishTab:CreateToggle({
