@@ -62,11 +62,11 @@ screen.Name = "UnifiedEnhancedDetectors"
 screen.Parent = CoreGui
 screen.ResetOnSpawn = false
 
--- Responsive main frame
+-- Responsive main frame optimized for mobile landscape
 local screenSize = workspace.CurrentCamera.ViewportSize
 local isLandscape = screenSize.X > screenSize.Y
-local frameWidth = isLandscape and 900 or 700
-local frameHeight = isLandscape and 550 or 600
+local frameWidth = isLandscape and 650 or 500  -- Reduced from 900 to 650 for landscape
+local frameHeight = isLandscape and 400 or 450  -- Reduced from 550 to 400 for landscape
 
 local mainFrame = Instance.new("Frame")
 mainFrame.Parent = screen
