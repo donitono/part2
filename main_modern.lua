@@ -147,35 +147,395 @@ local function CreateSafeCallback(originalCallback, buttonId)
     end
 end
 
--- Load Modern UI Library
+-- Load Modern UI Library (Embedded)
 print("XSAN: Loading Modern UI Library...")
 
-local Rayfield
-local success, error = pcall(function()
-    print("XSAN: Attempting to load Modern UI...")
-    -- Try to load modern UI first, fallback to fixed if needed
-    local uiContent = game:HttpGet("https://raw.githubusercontent.com/donitono/part2/main/ui_modern.lua")
-    if uiContent and #uiContent > 0 then
-        print("XSAN: Loading modern UI library...")
-        Rayfield = loadstring(uiContent)()
-    else
-        print("XSAN: Fallback to fixed UI library...")
-        Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/donitono/part2/main/ui_fixed.lua"))()
-    end
-    print("XSAN: UI library loadstring executed")
-end)
+-- Embedded UI library (fixed version)
+local Rayfield = loadstring([[
+-- Rayfield UI Library (Fixed Version for Tab Distribution)
+local cloneref = cloneref or function(obj) return obj end
 
-if not success then
-    warn("XSAN Error: Failed to load UI Library - " .. tostring(error))
-    return
+local function getService(name)
+	local service = game:GetService(name)
+	return cloneref and cloneref(service) or service
 end
+
+-- Services
+local TweenService = getService("TweenService")
+local UserInputService = getService("UserInputService")
+local GuiService = getService("GuiService")
+local RunService = getService("RunService")
+local Players = getService("Players")
+local CoreGui = getService("CoreGui")
+
+-- Variables
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+-- Create main ScreenGui with proper Z-Index
+local RayfieldLibrary = Instance.new("ScreenGui")
+RayfieldLibrary.Name = "RayfieldLibrary"
+RayfieldLibrary.ResetOnSpawn = false
+RayfieldLibrary.IgnoreGuiInset = true
+RayfieldLibrary.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+RayfieldLibrary.DisplayOrder = 10
+RayfieldLibrary.Parent = PlayerGui
+
+-- Variables for scaling and themes
+local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+local screenSize = workspace.CurrentCamera.ViewportSize
+
+-- Global tracking
+local CurrentTabs = {}
+local CurrentTab = nil
+
+-- Main Rayfield object
+local Rayfield = {}
+
+function Rayfield:CreateWindow(Settings)
+	local Window = {}
+	
+	-- Clear any existing tabs
+	CurrentTabs = {}
+	
+	-- Create main container with proper sizing
+	local Main = Instance.new("Frame")
+	Main.Name = "Main"
+	Main.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+	Main.BorderSizePixel = 0
+	Main.Position = UDim2.new(0.5, 0, 0.5, 0)
+	Main.AnchorPoint = Vector2.new(0.5, 0.5)
+	
+	-- Use compact 600x320 size (landscape friendly)
+	if isMobile then
+		Main.Size = UDim2.new(0, 600, 0, 320) -- Fixed compact size
+	else
+		Main.Size = UDim2.new(0, 600, 0, 380) -- Desktop still compact
+	end
+	
+	Main.Parent = RayfieldLibrary
+
+	local MainCorner = Instance.new("UICorner")
+	MainCorner.CornerRadius = UDim.new(0, 10)
+	MainCorner.Parent = Main
+
+	-- Create title bar
+	local TitleBar = Instance.new("Frame")
+	TitleBar.Name = "TitleBar"
+	TitleBar.Size = UDim2.new(1, 0, 0, 40)
+	TitleBar.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+	TitleBar.BorderSizePixel = 0
+	TitleBar.Parent = Main
+
+	local TitleCorner = Instance.new("UICorner")
+	TitleCorner.CornerRadius = UDim.new(0, 10)
+	TitleCorner.Parent = TitleBar
+
+	-- Fix corner for bottom
+	local TitleFix = Instance.new("Frame")
+	TitleFix.Size = UDim2.new(1, 0, 0, 10)
+	TitleFix.Position = UDim2.new(0, 0, 1, -10)
+	TitleFix.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
+	TitleFix.BorderSizePixel = 0
+	TitleFix.Parent = TitleBar
+
+	-- Title text
+	local Title = Instance.new("TextLabel")
+	Title.Size = UDim2.new(1, -20, 1, 0)
+	Title.Position = UDim2.new(0, 10, 0, 0)
+	Title.BackgroundTransparency = 1
+	Title.Text = Settings.Name or "Rayfield"
+	Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+	Title.TextScaled = true
+	Title.Font = Enum.Font.SourceSansBold
+	Title.Parent = TitleBar
+
+	-- Create tab container
+	local TabContainer = Instance.new("Frame")
+	TabContainer.Name = "TabContainer"
+	TabContainer.Size = UDim2.new(1, 0, 0, 35)
+	TabContainer.Position = UDim2.new(0, 0, 0, 45)
+	TabContainer.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+	TabContainer.BorderSizePixel = 0
+	TabContainer.Parent = Main
+
+	local TabLayout = Instance.new("UIListLayout")
+	TabLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	TabLayout.FillDirection = Enum.FillDirection.Horizontal
+	TabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Center
+	TabLayout.Padding = UDim.new(0, 2)
+	TabLayout.Parent = TabContainer
+
+	-- Create content area
+	local ContentFrame = Instance.new("Frame")
+	ContentFrame.Name = "ContentFrame"
+	ContentFrame.Size = UDim2.new(1, 0, 1, -85)
+	ContentFrame.Position = UDim2.new(0, 0, 0, 85)
+	ContentFrame.BackgroundTransparency = 1
+	ContentFrame.Parent = Main
+
+	function Window:CreateTab(Name, Icon)
+		local Tab = {}
+		
+		-- Create tab button
+		local TabButton = Instance.new("TextButton")
+		TabButton.Name = Name
+		TabButton.Size = UDim2.new(0, 120, 1, 0)
+		TabButton.BackgroundColor3 = #CurrentTabs == 0 and Color3.fromRGB(60, 120, 180) or Color3.fromRGB(50, 50, 60)
+		TabButton.BorderSizePixel = 0
+		TabButton.Text = Name
+		TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+		TabButton.TextScaled = true
+		TabButton.Font = Enum.Font.SourceSans
+		TabButton.Parent = TabContainer
+
+		local TabCorner = Instance.new("UICorner")
+		TabCorner.CornerRadius = UDim.new(0, 6)
+		TabCorner.Parent = TabButton
+
+		-- Create tab content
+		local TabContent = Instance.new("ScrollingFrame")
+		TabContent.Name = Name .. "Content"
+		TabContent.Size = UDim2.new(1, 0, 1, 0)
+		TabContent.Position = UDim2.new(0, 0, 0, 0)
+		TabContent.BackgroundTransparency = 1
+		TabContent.ScrollBarThickness = 8
+		TabContent.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+		TabContent.CanvasSize = UDim2.new(0, 0, 0, 0)
+		TabContent.AutomaticCanvasSize = Enum.AutomaticSize.Y
+		TabContent.Visible = #CurrentTabs == 0 -- First tab visible
+		TabContent.Parent = ContentFrame
+
+		local ContentLayout = Instance.new("UIListLayout")
+		ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+		ContentLayout.Padding = UDim.new(0, 5)
+		ContentLayout.Parent = TabContent
+
+		local ContentPadding = Instance.new("UIPadding")
+		ContentPadding.PaddingTop = UDim.new(0, 10)
+		ContentPadding.PaddingBottom = UDim.new(0, 10)
+		ContentPadding.PaddingLeft = UDim.new(0, 10)
+		ContentPadding.PaddingRight = UDim.new(0, 10)
+		ContentPadding.Parent = TabContent
+
+		-- Tab click event
+		TabButton.MouseButton1Click:Connect(function()
+			-- Hide all tabs
+			for _, tabData in pairs(CurrentTabs) do
+				tabData.Content.Visible = false
+				tabData.Button.BackgroundColor3 = Color3.fromRGB(50, 50, 60)
+			end
+			
+			-- Show this tab
+			TabContent.Visible = true
+			TabButton.BackgroundColor3 = Color3.fromRGB(60, 120, 180)
+			CurrentTab = Tab
+		end)
+
+		-- Store tab data
+		table.insert(CurrentTabs, Tab)
+		if #CurrentTabs == 1 then
+			CurrentTab = Tab
+		end
+
+		Tab.Content = TabContent
+		Tab.Button = TabButton
+
+		-- Tab-specific Create methods (FIXED VERSION)
+		function Tab:CreateParagraph(Settings)
+			local Container = Instance.new("Frame")
+			Container.Size = UDim2.new(1, 0, 0, 0)
+			Container.BackgroundTransparency = 1
+			Container.AutomaticSize = Enum.AutomaticSize.Y
+			Container.Parent = Tab.Content -- Use Tab.Content directly
+
+			if Settings.Title then
+				local Title = Instance.new("TextLabel")
+				Title.Size = UDim2.new(1, 0, 0, 20)
+				Title.BackgroundTransparency = 1
+				Title.Text = Settings.Title
+				Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+				Title.Font = Enum.Font.SourceSansBold
+				Title.TextSize = 12
+				Title.TextXAlignment = Enum.TextXAlignment.Left
+				Title.Parent = Container
+			end
+
+			local Content = Instance.new("TextLabel")
+			Content.Size = UDim2.new(1, 0, 0, 0)
+			Content.Position = Settings.Title and UDim2.new(0, 0, 0, 25) or UDim2.new(0, 0, 0, 0)
+			Content.BackgroundTransparency = 1
+			Content.Text = Settings.Content or ""
+			Content.TextColor3 = Color3.fromRGB(200, 200, 200)
+			Content.Font = Enum.Font.SourceSans
+			Content.TextSize = 10
+			Content.TextWrapped = true
+			Content.TextXAlignment = Enum.TextXAlignment.Left
+			Content.TextYAlignment = Enum.TextYAlignment.Top
+			Content.AutomaticSize = Enum.AutomaticSize.Y
+			Content.Parent = Container
+
+			local Layout = Instance.new("UIListLayout")
+			Layout.SortOrder = Enum.SortOrder.LayoutOrder
+			Layout.Padding = UDim.new(0, 2)
+			Layout.Parent = Container
+
+			return Container
+		end
+
+		function Tab:CreateButton(Settings)
+			local Button = Instance.new("TextButton")
+			Button.Size = UDim2.new(1, 0, 0, 30)
+			Button.BackgroundColor3 = Color3.fromRGB(60, 120, 180)
+			Button.BorderSizePixel = 0
+			Button.Text = Settings.Name or "Button"
+			Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+			Button.Font = Enum.Font.SourceSansBold
+			Button.TextSize = 11
+			Button.Parent = Tab.Content -- Use Tab.Content directly
+
+			local Corner = Instance.new("UICorner")
+			Corner.CornerRadius = UDim.new(0, 6)
+			Corner.Parent = Button
+
+			Button.MouseButton1Click:Connect(function()
+				if Settings.Callback then
+					Settings.Callback()
+				end
+			end)
+
+			return Button
+		end
+
+		function Tab:CreateToggle(Settings)
+			local Container = Instance.new("Frame")
+			Container.Size = UDim2.new(1, 0, 0, 35)
+			Container.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+			Container.BorderSizePixel = 0
+			Container.Parent = Tab.Content -- Use Tab.Content directly
+
+			local ContainerCorner = Instance.new("UICorner")
+			ContainerCorner.CornerRadius = UDim.new(0, 6)
+			ContainerCorner.Parent = Container
+
+			local Label = Instance.new("TextLabel")
+			Label.Size = UDim2.new(1, -60, 1, 0)
+			Label.Position = UDim2.new(0, 10, 0, 0)
+			Label.BackgroundTransparency = 1
+			Label.Text = Settings.Name or "Toggle"
+			Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+			Label.Font = Enum.Font.SourceSans
+			Label.TextSize = 11
+			Label.TextXAlignment = Enum.TextXAlignment.Left
+			Label.Parent = Container
+
+			local ToggleButton = Instance.new("TextButton")
+			ToggleButton.Size = UDim2.new(0, 40, 0, 20)
+			ToggleButton.Position = UDim2.new(1, -50, 0.5, -10)
+			ToggleButton.BackgroundColor3 = Settings.CurrentValue and Color3.fromRGB(60, 120, 180) or Color3.fromRGB(80, 80, 80)
+			ToggleButton.BorderSizePixel = 0
+			ToggleButton.Text = ""
+			ToggleButton.Parent = Container
+
+			local ToggleCorner = Instance.new("UICorner")
+			ToggleCorner.CornerRadius = UDim.new(0.5, 0)
+			ToggleCorner.Parent = ToggleButton
+
+			local isToggled = Settings.CurrentValue or false
+
+			ToggleButton.MouseButton1Click:Connect(function()
+				isToggled = not isToggled
+				ToggleButton.BackgroundColor3 = isToggled and Color3.fromRGB(60, 120, 180) or Color3.fromRGB(80, 80, 80)
+				if Settings.Callback then
+					Settings.Callback(isToggled)
+				end
+			end)
+
+			return Container
+		end
+
+		function Tab:CreateDropdown(Settings)
+			local Container = Instance.new("Frame")
+			Container.Size = UDim2.new(1, 0, 0, 35)
+			Container.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+			Container.BorderSizePixel = 0
+			Container.Parent = Tab.Content -- Use Tab.Content directly
+
+			local ContainerCorner = Instance.new("UICorner")
+			ContainerCorner.CornerRadius = UDim.new(0, 6)
+			ContainerCorner.Parent = Container
+
+			local Label = Instance.new("TextLabel")
+			Label.Size = UDim2.new(0.5, 0, 1, 0)
+			Label.Position = UDim2.new(0, 10, 0, 0)
+			Label.BackgroundTransparency = 1
+			Label.Text = Settings.Name or "Dropdown"
+			Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+			Label.Font = Enum.Font.SourceSans
+			Label.TextSize = 11
+			Label.TextXAlignment = Enum.TextXAlignment.Left
+			Label.Parent = Container
+
+			local DropdownButton = Instance.new("TextButton")
+			DropdownButton.Size = UDim2.new(0.5, -20, 0, 25)
+			DropdownButton.Position = UDim2.new(0.5, 10, 0, 5)
+			DropdownButton.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+			DropdownButton.BorderSizePixel = 0
+			DropdownButton.Text = Settings.CurrentOption or "Select..."
+			DropdownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+			DropdownButton.Font = Enum.Font.SourceSans
+			DropdownButton.TextSize = 10
+			DropdownButton.Parent = Container
+
+			-- Simple dropdown - cycle through options
+			local Options = Settings.Options or {}
+			local CurrentIndex = 1
+			
+			for i, option in ipairs(Options) do
+				if option == Settings.CurrentOption then
+					CurrentIndex = i
+					break
+				end
+			end
+
+			DropdownButton.MouseButton1Click:Connect(function()
+				CurrentIndex = CurrentIndex + 1
+				if CurrentIndex > #Options then
+					CurrentIndex = 1
+				end
+				
+				DropdownButton.Text = Options[CurrentIndex]
+				
+				if Settings.Callback then
+					Settings.Callback(Options[CurrentIndex])
+				end
+			end)
+
+			return Container
+		end
+
+		return Tab
+	end
+
+	-- Window utility functions
+	function Window:Refresh()
+		if Main and Main.Parent then
+			Main.Parent = Main.Parent
+		end
+	end
+
+	return Window
+end
+
+return Rayfield
+]])()
 
 if not Rayfield then
-    warn("XSAN Error: UI Library is nil after loading")
+    warn("XSAN ERROR: Failed to load embedded UI library")
     return
 end
 
-print("XSAN: Modern UI Library loaded successfully!")
+print("XSAN: Modern UI library loaded successfully!")
 
 -- Mobile/Android detection
 local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
@@ -738,7 +1098,210 @@ AnalyticsTab:CreateButton({
     end, "export_data_btn")
 })
 
--- === TAB 6: SETTINGS ===
+-- === TAB 6: BUY SYSTEM ===
+local BuySystemTab = Window:CreateTab("🛒 BUY SYSTEM", "🛒")
+
+BuySystemTab:CreateParagraph({
+    Title = "🛒 Smart Buy System Automation",
+    Content = "Automated purchasing, selling, and shop management with intelligent detection of all game purchase events."
+})
+
+-- Buy System Variables
+local autoBuyEnabled = false
+local autoSellItemsEnabled = false
+local autoEquipmentBuy = false
+local smartPurchasing = false
+local buyBudget = 1000
+local minCashThreshold = 500
+
+-- Auto Buy Functions
+local function executeRemoteFunction(remoteName, ...)
+    pcall(function()
+        if remotes[remoteName] then
+            if remotes[remoteName]:IsA("RemoteFunction") then
+                remotes[remoteName]:InvokeServer(...)
+            else
+                remotes[remoteName]:FireServer(...)
+            end
+        end
+    end)
+end
+
+-- Smart Auto Sell Items
+BuySystemTab:CreateToggle({
+    Name = "💰 Auto Sell Items",
+    CurrentValue = autoSellItemsEnabled,
+    Callback = CreateSafeCallback(function(value)
+        autoSellItemsEnabled = value
+        
+        if value then
+            Notify("💰 Auto Sell", "Started selling items automatically!")
+            task.spawn(function()
+                while autoSellItemsEnabled do
+                    pcall(function()
+                        -- Try multiple sell methods detected
+                        executeRemoteFunction("SellItem")
+                        wait(1)
+                        executeRemoteFunction("SellAllItems")
+                    end)
+                    wait(30) -- Sell every 30 seconds
+                end
+            end)
+        else
+            Notify("💰 Auto Sell", "Stopped!")
+        end
+    end, "auto_sell_items_toggle")
+})
+
+-- Auto Equipment Purchase
+BuySystemTab:CreateToggle({
+    Name = "🎣 Auto Buy Equipment",
+    CurrentValue = autoEquipmentBuy,
+    Callback = CreateSafeCallback(function(value)
+        autoEquipmentBuy = value
+        
+        if value then
+            Notify("🎣 Auto Equipment", "Smart equipment purchasing enabled!")
+            task.spawn(function()
+                while autoEquipmentBuy do
+                    pcall(function()
+                        -- Auto buy fishing gear when needed
+                        executeRemoteFunction("PurchaseFishingRod", "BestRod")
+                        wait(5)
+                        executeRemoteFunction("PurchaseBait", "BestBait")
+                        wait(5)
+                        executeRemoteFunction("PurchaseGear", "BestGear")
+                        wait(5)
+                        executeRemoteFunction("PurchaseBoat", "BestBoat")
+                    end)
+                    wait(120) -- Check every 2 minutes
+                end
+            end)
+        else
+            Notify("🎣 Auto Equipment", "Disabled!")
+        end
+    end, "auto_equipment_toggle")
+})
+
+-- Smart Purchase Manager
+BuySystemTab:CreateToggle({
+    Name = "🧠 Smart Purchase Manager",
+    CurrentValue = smartPurchasing,
+    Callback = CreateSafeCallback(function(value)
+        smartPurchasing = value
+        
+        if value then
+            Notify("🧠 Smart Purchasing", "AI purchase decisions enabled!")
+            task.spawn(function()
+                while smartPurchasing do
+                    pcall(function()
+                        -- Check if player has enough money before purchasing
+                        local playerStats = LocalPlayer:FindFirstChild("leaderstats")
+                        if playerStats and playerStats:FindFirstChild("Cash") then
+                            local currentCash = playerStats.Cash.Value
+                            
+                            if currentCash > minCashThreshold + buyBudget then
+                                -- Safe to make purchases
+                                executeRemoteFunction("PurchaseWeatherEvent")
+                                wait(2)
+                                executeRemoteFunction("PurchaseSkinCrate")
+                            end
+                        end
+                    end)
+                    wait(60) -- Check every minute
+                end
+            end)
+        else
+            Notify("🧠 Smart Purchasing", "Disabled!")
+        end
+    end, "smart_purchase_toggle")
+})
+
+-- Buy Budget Slider
+BuySystemTab:CreateSlider({
+    Name = "💵 Buy Budget",
+    Range = {100, 10000},
+    Increment = 100,
+    CurrentValue = buyBudget,
+    Callback = CreateSafeCallback(function(value)
+        buyBudget = value
+        Notify("💵 Budget Set", "Max spending: $" .. value)
+    end, "buy_budget_slider")
+})
+
+-- Min Cash Threshold
+BuySystemTab:CreateSlider({
+    Name = "🏦 Min Cash Reserve",
+    Range = {0, 5000},
+    Increment = 100,
+    CurrentValue = minCashThreshold,
+    Callback = CreateSafeCallback(function(value)
+        minCashThreshold = value
+        Notify("🏦 Reserve Set", "Keep minimum: $" .. value)
+    end, "cash_threshold_slider")
+})
+
+-- Manual Buy Buttons
+BuySystemTab:CreateButton({
+    Name = "🎣 Buy Best Fishing Rod",
+    Callback = CreateSafeCallback(function()
+        executeRemoteFunction("PurchaseFishingRod", "BestRod")
+        Notify("🎣 Purchase", "Attempting to buy best fishing rod!")
+    end, "buy_rod_btn")
+})
+
+BuySystemTab:CreateButton({
+    Name = "🪱 Buy Best Bait",
+    Callback = CreateSafeCallback(function()
+        executeRemoteFunction("PurchaseBait", "BestBait")
+        Notify("🪱 Purchase", "Attempting to buy best bait!")
+    end, "buy_bait_btn")
+})
+
+BuySystemTab:CreateButton({
+    Name = "⚓ Buy Best Boat",
+    Callback = CreateSafeCallback(function()
+        executeRemoteFunction("PurchaseBoat", "BestBoat")
+        Notify("⚓ Purchase", "Attempting to buy best boat!")
+    end, "buy_boat_btn")
+})
+
+BuySystemTab:CreateButton({
+    Name = "🎁 Buy Skin Crate",
+    Callback = CreateSafeCallback(function()
+        executeRemoteFunction("PurchaseSkinCrate")
+        Notify("🎁 Purchase", "Attempting to buy skin crate!")
+    end, "buy_crate_btn")
+})
+
+BuySystemTab:CreateButton({
+    Name = "💎 Sell All Items Now",
+    Callback = CreateSafeCallback(function()
+        executeRemoteFunction("SellAllItems")
+        Notify("💎 Sold!", "Selling all items now!")
+        fishingAnalytics.totalValue = fishingAnalytics.totalValue + 1000 -- Estimate
+    end, "sell_all_now_btn")
+})
+
+-- Weather Event Purchase
+BuySystemTab:CreateButton({
+    Name = "🌦️ Buy Weather Event",
+    Callback = CreateSafeCallback(function()
+        executeRemoteFunction("PurchaseWeatherEvent")
+        Notify("🌦️ Weather", "Attempting to purchase weather event!")
+    end, "buy_weather_btn")
+})
+
+-- Gamepass Purchase
+BuySystemTab:CreateButton({
+    Name = "🎫 Prompt Gamepass Purchase",
+    Callback = CreateSafeCallback(function()
+        executeRemoteFunction("PromptGamePassPurchase")
+        Notify("🎫 Gamepass", "Gamepass purchase prompt opened!")
+    end, "gamepass_btn")
+})
+
+-- === TAB 7: SETTINGS ===
 local SettingsTab = Window:CreateTab("⚙️ SETTINGS", "⚙️")
 
 SettingsTab:CreateParagraph({
@@ -772,7 +1335,15 @@ SettingsTab:CreateButton({
 })
 
 SettingsTab:CreateButton({
-    Name = "🔧 Advanced Tools Interface",
+    Name = "� Enhanced Buy System Detector",
+    Callback = CreateSafeCallback(function()
+        loadstring(game:HttpGet("https://raw.githubusercontent.com/donitono/part2/main/buy_system_detector.lua"))()
+        Notify("🛒 Buy Detector", "Enhanced buy system detector loaded!")
+    end, "buy_detector_btn")
+})
+
+SettingsTab:CreateButton({
+    Name = "�🔧 Advanced Tools Interface",
     Callback = CreateSafeCallback(function()
         loadstring(game:HttpGet("https://raw.githubusercontent.com/donitono/part2/main/unified_tools_interface.lua"))()
         Notify("🔧 Tools Loaded", "Advanced tools interface loaded!")
