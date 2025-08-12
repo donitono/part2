@@ -1,12 +1,23 @@
 --[[
-
-	Rayfield Interface Suite
-	by Sirius - Fixed Scrolling Version
+	XSAN Modern UI Suite - Enhanced Fixed Version
+	Tab-based interface optimized for mobile landscape
+	Based on Rayfield with modern enhancements and fixes
+	
+	Original: Rayfield Interface Suite by Sirius
+	Enhanced by: XSAN for Fish It Pro Ultimate
+	
+	Features:
+	• Mobile landscape optimization
+	• Enhanced scrolling fixes
+	• Compact interface design
+	• Touch-friendly controls
+	• Modern tab navigation ready
 
 	shlex  | Designing + Programming
 	iRay   | Programming
 	Max    | Programming
 	Damian | Programming
+	XSAN   | Mobile Optimization + Modern Enhancements
 
 ]]
 
