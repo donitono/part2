@@ -46,24 +46,20 @@ local UserInputService = game:GetService("UserInputService")
 local isDragging = false
 local dragStart = nil
 local startPos = nil
-local clickTime = 0
+local clickStart = 0
 
 floatingBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        clickTime = tick()
+        clickStart = tick()
         dragStart = input.Position
         startPos = floatingBtn.Position
-        wait(0.1) -- Small delay to detect if it's a drag or click
-        if dragStart and input.Position and (input.Position - dragStart).Magnitude > 5 then
-            isDragging = true
-        end
     end
 end)
 
 floatingBtn.InputChanged:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseMovement and dragStart then
         local delta = input.Position - dragStart
-        if delta.Magnitude > 5 then
+        if delta.Magnitude > 10 then -- Increased threshold
             isDragging = true
             floatingBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
         end
@@ -72,12 +68,20 @@ end)
 
 floatingBtn.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragStart = nil
-        startPos = nil
-        -- Reset dragging after a short delay
-        spawn(function()
-            wait(0.1)
+        local clickDuration = tick() - clickStart
+        -- Reset after short delay using spawn instead of wait
+        task.spawn(function()
+            task.wait(0.05)
+            if clickDuration < 0.3 and not isDragging then
+                -- This was a click, not a drag
+                local isUIVisible = main.Visible
+                isUIVisible = not isUIVisible
+                main.Visible = isUIVisible
+                floatingBtn.Text = isUIVisible and "📋" or "👁️"
+            end
             isDragging = false
+            dragStart = nil
+            startPos = nil
         end)
     end
 end)
@@ -258,61 +262,86 @@ end
 
 -- Hook server->client RemoteEvent (OnClientEvent)
 local function tryHookRemoteEvent(obj)
-    pcall(function()
-        if not obj or not obj:IsA("RemoteEvent") then return end
-        hookedEvents = hookedEvents + 1
-        statusLbl.Text = "Status: Hooked " .. hookedEvents .. " RemoteEvents. Events logged: " .. eventCount
-        obj.OnClientEvent:Connect(function(...)
-            local args = {...}
-            if not passesFilter(obj.Name) then return end
-            if not onlyMy(args) then return end
-            eventCount = eventCount + 1
-            statusLbl.Text = "Status: Hooked " .. hookedEvents .. " RemoteEvents. Events logged: " .. eventCount
-            addEntry((pcall(function() return obj:GetFullName() end) and obj:GetFullName() or tostring(obj)), args, "FROM")
+    task.spawn(function()
+        pcall(function()
+            if not obj or not obj:IsA("RemoteEvent") then return end
+            hookedEvents = hookedEvents + 1
+            task.spawn(function()
+                pcall(function()
+                    statusLbl.Text = "Status: Hooked " .. hookedEvents .. " RemoteEvents. Events logged: " .. eventCount
+                end)
+            end)
+            obj.OnClientEvent:Connect(function(...)
+                local args = {...}
+                task.spawn(function()
+                    pcall(function()
+                        if not passesFilter(obj.Name) then return end
+                        if not onlyMy(args) then return end
+                        eventCount = eventCount + 1
+                        statusLbl.Text = "Status: Hooked " .. hookedEvents .. " RemoteEvents. Events logged: " .. eventCount
+                        addEntry((pcall(function() return obj:GetFullName() end) and obj:GetFullName() or tostring(obj)), args, "FROM")
+                    end)
+                end)
+            end)
         end)
     end)
 end
 
 -- Hook client->server FireServer (via __namecall)
 local function tryHookNamecallForFire()
-    local ok, mt = pcall(function() return getrawmetatable(game) end)
-    if not ok or not mt then 
-        statusLbl.Text = "Status: Cannot access metamethods (executor limitation)"
-        return 
-    end
-    local old = mt.__namecall
-    local setok = pcall(function() setreadonly(mt,false) end)
-    mt.__namecall = newcclosure(function(self, ...)
-        local method = getnamecallmethod()
-        if method == "FireServer" and typeof(self)=="Instance" and self:IsA("RemoteEvent") then
-            local args = {...}
-            if passesFilter(self.Name) and onlyMy(args) then
-                eventCount = eventCount + 1
-                statusLbl.Text = "Status: Hooked " .. hookedEvents .. " RemoteEvents. Events logged: " .. eventCount
-                addEntry((pcall(function() return self:GetFullName() end) and self:GetFullName() or tostring(self)), args, "TO")
+    task.spawn(function()
+        pcall(function()
+            local ok, mt = pcall(function() return getrawmetatable(game) end)
+            if not ok or not mt then 
+                task.spawn(function()
+                    pcall(function()
+                        statusLbl.Text = "Status: Cannot access metamethods (executor limitation)"
+                    end)
+                end)
+                return 
             end
-        end
-        return old(self, ...)
+            local old = mt.__namecall
+            local setok = pcall(function() setreadonly(mt,false) end)
+            mt.__namecall = newcclosure(function(self, ...)
+                local method = getnamecallmethod()
+                if method == "FireServer" and typeof(self)=="Instance" and self:IsA("RemoteEvent") then
+                    local args = {...}
+                    task.spawn(function()
+                        pcall(function()
+                            if passesFilter(self.Name) and onlyMy(args) then
+                                eventCount = eventCount + 1
+                                statusLbl.Text = "Status: Hooked " .. hookedEvents .. " RemoteEvents. Events logged: " .. eventCount
+                                addEntry((pcall(function() return self:GetFullName() end) and self:GetFullName() or tostring(self)), args, "TO")
+                            end
+                        end)
+                    end)
+                end
+                return old(self, ...)
+            end)
+            if setok then pcall(function() setreadonly(mt,true) end) end
+        end)
     end)
-    if setok then pcall(function() setreadonly(mt,true) end) end
 end
 
 -- initial hook existing
-for _,v in ipairs(game:GetDescendants()) do
-    if v:IsA("RemoteEvent") then tryHookRemoteEvent(v) end
-end
-game.DescendantAdded:Connect(function(obj) if obj:IsA("RemoteEvent") then tryHookRemoteEvent(obj) end end)
-tryHookNamecallForFire()
-
--- Floating button toggle handler
-local isUIVisible = true
-floatingBtn.MouseButton1Click:Connect(function()
-    if not isDragging then -- Only toggle if not dragging
-        isUIVisible = not isUIVisible
-        main.Visible = isUIVisible
-        floatingBtn.Text = isUIVisible and "📋" or "👁️"
-    end
+-- initial hook existing (with better error handling)
+task.spawn(function()
+    pcall(function()
+        for _,v in ipairs(game:GetDescendants()) do
+            if v:IsA("RemoteEvent") then 
+                tryHookRemoteEvent(v) 
+            end
+        end
+    end)
 end)
+
+game.DescendantAdded:Connect(function(obj) 
+    if obj:IsA("RemoteEvent") then 
+        tryHookRemoteEvent(obj) 
+    end 
+end)
+
+tryHookNamecallForFire()
 
 -- UI interactions
 btnMin.MouseButton1Click:Connect(function()

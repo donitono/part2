@@ -38,15 +38,13 @@ local UserInputService = game:GetService("UserInputService")
 local isDragging = false
 local dragStart = nil
 local startPos = nil
+local clickStart = 0
 
 floatingBtn.InputBegan:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        clickStart = tick()
         dragStart = input.Position
         startPos = floatingBtn.Position
-        wait(0.1)
-        if dragStart and input.Position and (input.Position - dragStart).Magnitude > 5 then
-            isDragging = true
-        end
     end
 end)
 
@@ -62,11 +60,18 @@ end)
 
 floatingBtn.InputEnded:Connect(function(input)
     if input.UserInputType == Enum.UserInputType.MouseButton1 then
-        dragStart = nil
-        startPos = nil
-        spawn(function()
-            wait(0.1)
+        local clickDuration = tick() - (clickStart or 0)
+        task.spawn(function()
+            task.wait(0.05)
+            if clickDuration < 0.3 and not isDragging then
+                local isUIVisible = main.Visible
+                isUIVisible = not isUIVisible
+                main.Visible = isUIVisible
+                floatingBtn.Text = isUIVisible and "🔧" or "👁️"
+            end
             isDragging = false
+            dragStart = nil
+            startPos = nil
         end)
     end
 end)
@@ -183,16 +188,6 @@ end
 
 -- initial
 tryHookInvoke()
-
--- Floating button toggle handler
-local isUIVisible = true
-floatingBtn.MouseButton1Click:Connect(function()
-    if not isDragging then
-        isUIVisible = not isUIVisible
-        main.Visible = isUIVisible
-        floatingBtn.Text = isUIVisible and "🔧" or "👁️"
-    end
-end)
 
 -- UI handlers
 btnMin.MouseButton1Click:Connect(function() main.Size = (main.Size.Y.Offset>60) and UDim2.new(0,520,0,46) or UDim2.new(0,520,0,420) end)
