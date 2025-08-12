@@ -662,16 +662,15 @@ function Rayfield:CreateWindow(Settings)
 	end
 
 	-- Additional utility functions for window
+	-- Additional utility functions for window
 	function Window:Refresh()
 		-- Refresh function
+		if Main and Main.Parent then
+			Main.Parent = Main.Parent -- Force refresh
+		end
 	end
 
 	return Window
-end
-
--- Additional utility functions for window
-function CurrentWindow:Refresh()
-	-- Refresh function
 end
 
 -- Return the Rayfield object
