@@ -19,6 +19,58 @@ end
 -- UI
 local CoreGui = game:GetService("CoreGui")
 local screen = Instance.new("ScreenGui"); screen.Name = "RF_Logger_UI"; screen.Parent = CoreGui
+
+-- Floating toggle button
+local floatingBtn = Instance.new("TextButton", screen)
+floatingBtn.Size = UDim2.new(0, 50, 0, 50)
+floatingBtn.Position = UDim2.new(0, 20, 0, 200)
+floatingBtn.Text = "🔧"
+floatingBtn.TextSize = 20
+floatingBtn.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+floatingBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+floatingBtn.BorderSizePixel = 0
+floatingBtn.ZIndex = 1000
+local floatingCorner = Instance.new("UICorner", floatingBtn)
+floatingCorner.CornerRadius = UDim.new(0, 25)
+
+-- Make floating button draggable
+local UserInputService = game:GetService("UserInputService")
+local isDragging = false
+local dragStart = nil
+local startPos = nil
+
+floatingBtn.InputBegan:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragStart = input.Position
+        startPos = floatingBtn.Position
+        wait(0.1)
+        if dragStart and input.Position and (input.Position - dragStart).Magnitude > 5 then
+            isDragging = true
+        end
+    end
+end)
+
+floatingBtn.InputChanged:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseMovement and dragStart then
+        local delta = input.Position - dragStart
+        if delta.Magnitude > 5 then
+            isDragging = true
+            floatingBtn.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+        end
+    end
+end)
+
+floatingBtn.InputEnded:Connect(function(input)
+    if input.UserInputType == Enum.UserInputType.MouseButton1 then
+        dragStart = nil
+        startPos = nil
+        spawn(function()
+            wait(0.1)
+            isDragging = false
+        end)
+    end
+end)
+
 local main = Instance.new("Frame", screen); main.Size = UDim2.new(0,520,0,420); main.Position = UDim2.new(0.14,0,0.14,0)
 main.BackgroundColor3 = Color3.fromRGB(22,22,22); main.BorderSizePixel = 0; Instance.new("UICorner", main).CornerRadius = UDim.new(0,10)
 
@@ -131,6 +183,16 @@ end
 
 -- initial
 tryHookInvoke()
+
+-- Floating button toggle handler
+local isUIVisible = true
+floatingBtn.MouseButton1Click:Connect(function()
+    if not isDragging then
+        isUIVisible = not isUIVisible
+        main.Visible = isUIVisible
+        floatingBtn.Text = isUIVisible and "🔧" or "👁️"
+    end
+end)
 
 -- UI handlers
 btnMin.MouseButton1Click:Connect(function() main.Size = (main.Size.Y.Offset>60) and UDim2.new(0,520,0,46) or UDim2.new(0,520,0,420) end)
