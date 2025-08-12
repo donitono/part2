@@ -1,0 +1,647 @@
+--[[
+
+	Rayfield Interface Suite
+	by Sirius - Fixed Scrolling Version
+
+	shlex  | Designing + Programming
+	iRay   | Programming
+	Max    | Programming
+	Damian | Programming
+
+]]
+
+if debugX then
+	warn('Initialising Rayfield')
+end
+
+local function getService(name)
+	local service = game:GetService(name)
+	return cloneref and cloneref(service) or service
+end
+
+-- Services
+local TweenService = getService("TweenService")
+local UserInputService = getService("UserInputService")
+local GuiService = getService("GuiService")
+local RunService = getService("RunService")
+local Players = getService("Players")
+local CoreGui = getService("CoreGui")
+
+-- Variables
+local Player = Players.LocalPlayer
+local PlayerGui = Player:WaitForChild("PlayerGui")
+
+-- Create main ScreenGui
+local RayfieldLibrary = Instance.new("ScreenGui")
+RayfieldLibrary.Name = "RayfieldLibrary"
+RayfieldLibrary.ResetOnSpawn = false
+RayfieldLibrary.IgnoreGuiInset = true
+RayfieldLibrary.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+
+-- Try to parent to CoreGui first, then fallback to PlayerGui
+local success = pcall(function()
+	RayfieldLibrary.Parent = CoreGui
+end)
+
+if not success then
+	RayfieldLibrary.Parent = PlayerGui
+end
+
+-- Rayfield Object
+local Rayfield = {}
+
+-- Functions
+function Rayfield:CreateWindow(Settings)
+	local WindowSettings = {
+		Name = Settings.Name or "Rayfield Interface Suite",
+		LoadingTitle = Settings.LoadingTitle or "Rayfield Interface Suite",
+		LoadingSubtitle = Settings.LoadingSubtitle or "by Sirius",
+		ConfigurationSaving = {
+			Enabled = Settings.ConfigurationSaving and Settings.ConfigurationSaving.Enabled or false,
+			FolderName = Settings.ConfigurationSaving and Settings.ConfigurationSaving.FolderName or "Rayfield",
+			FileName = Settings.ConfigurationSaving and Settings.ConfigurationSaving.FileName or "Big Hub"
+		},
+		Discord = {
+			Enabled = Settings.Discord and Settings.Discord.Enabled or false,
+			Invite = Settings.Discord and Settings.Discord.Invite or "noinvitelink",
+			RememberJoins = Settings.Discord and Settings.Discord.RememberJoins or true
+		},
+		KeySystem = Settings.KeySystem or false,
+		KeySettings = {
+			Title = Settings.KeySettings and Settings.KeySettings.Title or "Rayfield",
+			Subtitle = Settings.KeySettings and Settings.KeySettings.Subtitle or "Key System",
+			Note = Settings.KeySettings and Settings.KeySettings.Note or "No method of obtaining the key is provided",
+			FileName = Settings.KeySettings and Settings.KeySettings.FileName or "Key",
+			SaveKey = Settings.KeySettings and Settings.KeySettings.SaveKey or false,
+			GrabKeyFromSite = Settings.KeySettings and Settings.KeySettings.GrabKeyFromSite or false,
+			Key = Settings.KeySettings and Settings.KeySettings.Key or {"Hello"}
+		}
+	}
+
+	-- Create Main Frame
+	local Main = Instance.new("Frame")
+	Main.Name = "Main"
+	Main.BackgroundColor3 = Color3.fromRGB(30, 30, 30)
+	Main.BorderSizePixel = 0
+	Main.Position = UDim2.new(0.5, -300, 0.5, -200)
+	Main.Size = UDim2.new(0, 600, 0, 400)
+	Main.Parent = RayfieldLibrary
+
+	-- Add UICorner
+	local UICorner = Instance.new("UICorner")
+	UICorner.CornerRadius = UDim.new(0, 10)
+	UICorner.Parent = Main
+
+	-- Add UIStroke
+	local UIStroke = Instance.new("UIStroke")
+	UIStroke.Color = Color3.fromRGB(60, 60, 60)
+	UIStroke.Thickness = 1
+	UIStroke.Parent = Main
+
+	-- Create Topbar
+	local Topbar = Instance.new("Frame")
+	Topbar.Name = "Topbar"
+	Topbar.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
+	Topbar.BorderSizePixel = 0
+	Topbar.Position = UDim2.new(0, 0, 0, 0)
+	Topbar.Size = UDim2.new(1, 0, 0, 40)
+	Topbar.Parent = Main
+
+	-- Add UICorner to Topbar
+	local TopbarCorner = Instance.new("UICorner")
+	TopbarCorner.CornerRadius = UDim.new(0, 10)
+	TopbarCorner.Parent = Topbar
+
+	-- Create Title
+	local Title = Instance.new("TextLabel")
+	Title.Name = "Title"
+	Title.BackgroundTransparency = 1
+	Title.Position = UDim2.new(0, 15, 0, 0)
+	Title.Size = UDim2.new(1, -30, 1, 0)
+	Title.Font = Enum.Font.SourceSansBold
+	Title.Text = WindowSettings.Name
+	Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+	Title.TextScaled = true
+	Title.TextXAlignment = Enum.TextXAlignment.Left
+	Title.Parent = Topbar
+
+	-- Create Tabs Container
+	local TabContainer = Instance.new("Frame")
+	TabContainer.Name = "TabContainer"
+	TabContainer.BackgroundTransparency = 1
+	TabContainer.Position = UDim2.new(0, 0, 0, 40)
+	TabContainer.Size = UDim2.new(0, 150, 1, -40)
+	TabContainer.Parent = Main
+
+	-- Create Tab List with scrolling
+	local TabList = Instance.new("ScrollingFrame")
+	TabList.Name = "TabList"
+	TabList.BackgroundColor3 = Color3.fromRGB(35, 35, 35)
+	TabList.BorderSizePixel = 0
+	TabList.Position = UDim2.new(0, 0, 0, 0)
+	TabList.Size = UDim2.new(1, 0, 1, 0)
+	TabList.ScrollBarThickness = 5
+	TabList.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+	TabList.CanvasSize = UDim2.new(0, 0, 0, 0)
+	TabList.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	TabList.ScrollingDirection = Enum.ScrollingDirection.Y
+	TabList.Parent = TabContainer
+
+	-- Add UIListLayout to TabList
+	local TabListLayout = Instance.new("UIListLayout")
+	TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	TabListLayout.Padding = UDim.new(0, 2)
+	TabListLayout.Parent = TabList
+
+	-- Create Content Container
+	local ContentContainer = Instance.new("Frame")
+	ContentContainer.Name = "ContentContainer"
+	ContentContainer.BackgroundTransparency = 1
+	ContentContainer.Position = UDim2.new(0, 150, 0, 40)
+	ContentContainer.Size = UDim2.new(1, -150, 1, -40)
+	ContentContainer.Parent = Main
+
+	-- Create Content with scrolling
+	local Content = Instance.new("ScrollingFrame")
+	Content.Name = "Content"
+	Content.BackgroundTransparency = 1
+	Content.Position = UDim2.new(0, 0, 0, 0)
+	Content.Size = UDim2.new(1, 0, 1, 0)
+	Content.ScrollBarThickness = 8
+	Content.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+	Content.CanvasSize = UDim2.new(0, 0, 0, 0)
+	Content.AutomaticCanvasSize = Enum.AutomaticSize.Y
+	Content.ScrollingDirection = Enum.ScrollingDirection.Y
+	Content.Parent = ContentContainer
+
+	-- Add UIListLayout to Content
+	local ContentLayout = Instance.new("UIListLayout")
+	ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+	ContentLayout.Padding = UDim.new(0, 5)
+	ContentLayout.Parent = Content
+
+	-- Add UIPadding to Content
+	local ContentPadding = Instance.new("UIPadding")
+	ContentPadding.PaddingTop = UDim.new(0, 10)
+	ContentPadding.PaddingBottom = UDim.new(0, 10)
+	ContentPadding.PaddingLeft = UDim.new(0, 10)
+	ContentPadding.PaddingRight = UDim.new(0, 10)
+	ContentPadding.Parent = Content
+
+	-- Make window draggable
+	local dragging = false
+	local dragInput
+	local dragStart
+	local startPos
+
+	local function update(input)
+		local delta = input.Position - dragStart
+		Main.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+	end
+
+	Topbar.InputBegan:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+			dragging = true
+			dragStart = input.Position
+			startPos = Main.Position
+
+			input.Changed:Connect(function()
+				if input.UserInputState == Enum.UserInputState.End then
+					dragging = false
+				end
+			end)
+		end
+	end)
+
+	Topbar.InputChanged:Connect(function(input)
+		if input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch then
+			dragInput = input
+		end
+	end)
+
+	UserInputService.InputChanged:Connect(function(input)
+		if input == dragInput and dragging then
+			update(input)
+		end
+	end)
+
+	-- Window Object
+	local Window = {}
+	local Tabs = {}
+	local currentTab = nil
+
+	-- Create Tab function
+	function Window:CreateTab(Name, Image)
+		local Tab = {}
+		Tab.Name = Name
+
+		-- Create Tab Button
+		local TabButton = Instance.new("TextButton")
+		TabButton.Name = Name
+		TabButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+		TabButton.BorderSizePixel = 0
+		TabButton.Size = UDim2.new(1, 0, 0, 35)
+		TabButton.Font = Enum.Font.SourceSans
+		TabButton.Text = Name
+		TabButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+		TabButton.TextScaled = true
+		TabButton.Parent = TabList
+
+		-- Add UICorner to TabButton
+		local TabButtonCorner = Instance.new("UICorner")
+		TabButtonCorner.CornerRadius = UDim.new(0, 5)
+		TabButtonCorner.Parent = TabButton
+
+		-- Create Tab Content
+		local TabContent = Instance.new("Frame")
+		TabContent.Name = Name .. "_Content"
+		TabContent.BackgroundTransparency = 1
+		TabContent.Size = UDim2.new(1, 0, 1, 0)
+		TabContent.Visible = false
+		TabContent.Parent = Content
+
+		-- Add UIListLayout to TabContent
+		local TabContentLayout = Instance.new("UIListLayout")
+		TabContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+		TabContentLayout.Padding = UDim.new(0, 5)
+		TabContentLayout.Parent = TabContent
+
+		-- Tab switching logic
+		TabButton.MouseButton1Click:Connect(function()
+			-- Hide all other tabs
+			for _, tabContent in pairs(Content:GetChildren()) do
+				if tabContent:IsA("Frame") and tabContent.Name:find("_Content") then
+					tabContent.Visible = false
+				end
+			end
+
+			-- Reset all tab button colors
+			for _, tabButton in pairs(TabList:GetChildren()) do
+				if tabButton:IsA("TextButton") then
+					tabButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+					tabButton.TextColor3 = Color3.fromRGB(200, 200, 200)
+				end
+			end
+
+			-- Show selected tab and highlight button
+			TabContent.Visible = true
+			TabButton.BackgroundColor3 = Color3.fromRGB(70, 130, 200)
+			TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+			currentTab = Tab
+		end)
+
+		-- If this is the first tab, select it
+		if #Tabs == 0 then
+			TabContent.Visible = true
+			TabButton.BackgroundColor3 = Color3.fromRGB(70, 130, 200)
+			TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+			currentTab = Tab
+		end
+
+		-- Store tab reference
+		table.insert(Tabs, Tab)
+		Tab.Content = TabContent
+
+		-- Tab functions
+		function Tab:CreateSection(Name)
+			local Section = {}
+
+			-- Create Section Frame
+			local SectionFrame = Instance.new("Frame")
+			SectionFrame.Name = Name
+			SectionFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+			SectionFrame.BorderSizePixel = 0
+			SectionFrame.Size = UDim2.new(1, 0, 0, 0)
+			SectionFrame.AutomaticSize = Enum.AutomaticSize.Y
+			SectionFrame.Parent = TabContent
+
+			-- Add UICorner
+			local SectionCorner = Instance.new("UICorner")
+			SectionCorner.CornerRadius = UDim.new(0, 8)
+			SectionCorner.Parent = SectionFrame
+
+			-- Add UIPadding
+			local SectionPadding = Instance.new("UIPadding")
+			SectionPadding.PaddingTop = UDim.new(0, 10)
+			SectionPadding.PaddingBottom = UDim.new(0, 10)
+			SectionPadding.PaddingLeft = UDim.new(0, 10)
+			SectionPadding.PaddingRight = UDim.new(0, 10)
+			SectionPadding.Parent = SectionFrame
+
+			-- Create Section Title
+			local SectionTitle = Instance.new("TextLabel")
+			SectionTitle.Name = "Title"
+			SectionTitle.BackgroundTransparency = 1
+			SectionTitle.Size = UDim2.new(1, 0, 0, 25)
+			SectionTitle.Font = Enum.Font.SourceSansBold
+			SectionTitle.Text = Name
+			SectionTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+			SectionTitle.TextScaled = true
+			SectionTitle.TextXAlignment = Enum.TextXAlignment.Left
+			SectionTitle.Parent = SectionFrame
+
+			-- Create Section Content
+			local SectionContent = Instance.new("Frame")
+			SectionContent.Name = "Content"
+			SectionContent.BackgroundTransparency = 1
+			SectionContent.Position = UDim2.new(0, 0, 0, 30)
+			SectionContent.Size = UDim2.new(1, 0, 0, 0)
+			SectionContent.AutomaticSize = Enum.AutomaticSize.Y
+			SectionContent.Parent = SectionFrame
+
+			-- Add UIListLayout to SectionContent
+			local SectionContentLayout = Instance.new("UIListLayout")
+			SectionContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+			SectionContentLayout.Padding = UDim.new(0, 5)
+			SectionContentLayout.Parent = SectionContent
+
+			-- Section functions
+			function Section:CreateButton(Settings)
+				local ButtonSettings = {
+					Name = Settings.Name or "Button",
+					Callback = Settings.Callback or function() end
+				}
+
+				-- Create Button
+				local Button = Instance.new("TextButton")
+				Button.Name = ButtonSettings.Name
+				Button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+				Button.BorderSizePixel = 0
+				Button.Size = UDim2.new(1, 0, 0, 35)
+				Button.Font = Enum.Font.SourceSans
+				Button.Text = ButtonSettings.Name
+				Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+				Button.TextScaled = true
+				Button.Parent = SectionContent
+
+				-- Add UICorner
+				local ButtonCorner = Instance.new("UICorner")
+				ButtonCorner.CornerRadius = UDim.new(0, 5)
+				ButtonCorner.Parent = Button
+
+				-- Button hover effects
+				Button.MouseEnter:Connect(function()
+					TweenService:Create(Button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(80, 80, 80)}):Play()
+				end)
+
+				Button.MouseLeave:Connect(function()
+					TweenService:Create(Button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+				end)
+
+				-- Button click
+				Button.MouseButton1Click:Connect(function()
+					TweenService:Create(Button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(100, 100, 100)}):Play()
+					task.wait(0.1)
+					TweenService:Create(Button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(80, 80, 80)}):Play()
+					ButtonSettings.Callback()
+				end)
+
+				return Button
+			end
+
+			function Section:CreateToggle(Settings)
+				local ToggleSettings = {
+					Name = Settings.Name or "Toggle",
+					CurrentValue = Settings.CurrentValue or false,
+					Flag = Settings.Flag or nil,
+					Callback = Settings.Callback or function() end
+				}
+
+				-- Create Toggle Frame
+				local ToggleFrame = Instance.new("Frame")
+				ToggleFrame.Name = ToggleSettings.Name
+				ToggleFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+				ToggleFrame.BorderSizePixel = 0
+				ToggleFrame.Size = UDim2.new(1, 0, 0, 35)
+				ToggleFrame.Parent = SectionContent
+
+				-- Add UICorner
+				local ToggleFrameCorner = Instance.new("UICorner")
+				ToggleFrameCorner.CornerRadius = UDim.new(0, 5)
+				ToggleFrameCorner.Parent = ToggleFrame
+
+				-- Create Toggle Label
+				local ToggleLabel = Instance.new("TextLabel")
+				ToggleLabel.BackgroundTransparency = 1
+				ToggleLabel.Position = UDim2.new(0, 10, 0, 0)
+				ToggleLabel.Size = UDim2.new(1, -50, 1, 0)
+				ToggleLabel.Font = Enum.Font.SourceSans
+				ToggleLabel.Text = ToggleSettings.Name
+				ToggleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+				ToggleLabel.TextScaled = true
+				ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+				ToggleLabel.Parent = ToggleFrame
+
+				-- Create Toggle Button
+				local ToggleButton = Instance.new("TextButton")
+				ToggleButton.BackgroundColor3 = ToggleSettings.CurrentValue and Color3.fromRGB(100, 200, 100) or Color3.fromRGB(200, 100, 100)
+				ToggleButton.BorderSizePixel = 0
+				ToggleButton.Position = UDim2.new(1, -35, 0.5, -10)
+				ToggleButton.Size = UDim2.new(0, 30, 0, 20)
+				ToggleButton.Text = ToggleSettings.CurrentValue and "ON" or "OFF"
+				ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+				ToggleButton.TextScaled = true
+				ToggleButton.Font = Enum.Font.SourceSansBold
+				ToggleButton.Parent = ToggleFrame
+
+				-- Add UICorner to Toggle Button
+				local ToggleButtonCorner = Instance.new("UICorner")
+				ToggleButtonCorner.CornerRadius = UDim.new(0, 3)
+				ToggleButtonCorner.Parent = ToggleButton
+
+				-- Toggle function
+				local function Toggle()
+					ToggleSettings.CurrentValue = not ToggleSettings.CurrentValue
+					ToggleButton.Text = ToggleSettings.CurrentValue and "ON" or "OFF"
+					TweenService:Create(ToggleButton, TweenInfo.new(0.2), {
+						BackgroundColor3 = ToggleSettings.CurrentValue and Color3.fromRGB(100, 200, 100) or Color3.fromRGB(200, 100, 100)
+					}):Play()
+					ToggleSettings.Callback(ToggleSettings.CurrentValue)
+				end
+
+				ToggleButton.MouseButton1Click:Connect(Toggle)
+				ToggleFrame.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 then
+						Toggle()
+					end
+				end)
+
+				local ToggleObject = {}
+				function ToggleObject:Set(Value)
+					ToggleSettings.CurrentValue = Value
+					ToggleButton.Text = Value and "ON" or "OFF"
+					ToggleButton.BackgroundColor3 = Value and Color3.fromRGB(100, 200, 100) or Color3.fromRGB(200, 100, 100)
+					ToggleSettings.Callback(Value)
+				end
+
+				return ToggleObject
+			end
+
+			function Section:CreateDropdown(Settings)
+				local DropdownSettings = {
+					Name = Settings.Name or "Dropdown",
+					Options = Settings.Options or {},
+					CurrentOption = Settings.CurrentOption or (Settings.Options and Settings.Options[1]) or "",
+					MultipleOptions = Settings.MultipleOptions or false,
+					Flag = Settings.Flag or nil,
+					Callback = Settings.Callback or function() end
+				}
+
+				-- Create Dropdown Frame
+				local DropdownFrame = Instance.new("Frame")
+				DropdownFrame.Name = DropdownSettings.Name
+				DropdownFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+				DropdownFrame.BorderSizePixel = 0
+				DropdownFrame.Size = UDim2.new(1, 0, 0, 35)
+				DropdownFrame.Parent = SectionContent
+
+				-- Add UICorner
+				local DropdownCorner = Instance.new("UICorner")
+				DropdownCorner.CornerRadius = UDim.new(0, 5)
+				DropdownCorner.Parent = DropdownFrame
+
+				-- Create Dropdown Button
+				local DropdownButton = Instance.new("TextButton")
+				DropdownButton.BackgroundTransparency = 1
+				DropdownButton.Size = UDim2.new(1, 0, 1, 0)
+				DropdownButton.Font = Enum.Font.SourceSans
+				DropdownButton.Text = DropdownSettings.Name .. ": " .. tostring(DropdownSettings.CurrentOption)
+				DropdownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+				DropdownButton.TextScaled = true
+				DropdownButton.TextXAlignment = Enum.TextXAlignment.Left
+				DropdownButton.Parent = DropdownFrame
+
+				-- Add padding to dropdown text
+				local DropdownPadding = Instance.new("UIPadding")
+				DropdownPadding.PaddingLeft = UDim.new(0, 10)
+				DropdownPadding.PaddingRight = UDim.new(0, 10)
+				DropdownPadding.Parent = DropdownButton
+
+				-- Create Options Frame
+				local OptionsFrame = Instance.new("ScrollingFrame")
+				OptionsFrame.Name = "Options"
+				OptionsFrame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+				OptionsFrame.BorderSizePixel = 0
+				OptionsFrame.Position = UDim2.new(0, 0, 1, 2)
+				OptionsFrame.Size = UDim2.new(1, 0, 0, 0)
+				OptionsFrame.Visible = false
+				OptionsFrame.ZIndex = 10
+				OptionsFrame.ScrollBarThickness = 5
+				OptionsFrame.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
+				OptionsFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
+				OptionsFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
+				OptionsFrame.ScrollingDirection = Enum.ScrollingDirection.Y
+				OptionsFrame.Parent = DropdownFrame
+
+				-- Add UICorner to Options
+				local OptionsCorner = Instance.new("UICorner")
+				OptionsCorner.CornerRadius = UDim.new(0, 5)
+				OptionsCorner.Parent = OptionsFrame
+
+				-- Add UIListLayout to Options
+				local OptionsLayout = Instance.new("UIListLayout")
+				OptionsLayout.SortOrder = Enum.SortOrder.LayoutOrder
+				OptionsLayout.Padding = UDim.new(0, 1)
+				OptionsLayout.Parent = OptionsFrame
+
+				-- Variables
+				local isOpen = false
+
+				-- Function to update options
+				local function UpdateOptions()
+					for _, child in pairs(OptionsFrame:GetChildren()) do
+						if child:IsA("TextButton") then
+							child:Destroy()
+						end
+					end
+
+					local maxHeight = math.min(#DropdownSettings.Options * 25, 150)
+					OptionsFrame.Size = UDim2.new(1, 0, 0, maxHeight)
+
+					for i, option in ipairs(DropdownSettings.Options) do
+						local OptionButton = Instance.new("TextButton")
+						OptionButton.Name = option
+						OptionButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+						OptionButton.BorderSizePixel = 0
+						OptionButton.Size = UDim2.new(1, 0, 0, 25)
+						OptionButton.Font = Enum.Font.SourceSans
+						OptionButton.Text = option
+						OptionButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+						OptionButton.TextScaled = true
+						OptionButton.Parent = OptionsFrame
+
+						OptionButton.MouseEnter:Connect(function()
+							OptionButton.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+						end)
+
+						OptionButton.MouseLeave:Connect(function()
+							OptionButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
+						end)
+
+						OptionButton.MouseButton1Click:Connect(function()
+							DropdownSettings.CurrentOption = option
+							DropdownButton.Text = DropdownSettings.Name .. ": " .. option
+							OptionsFrame.Visible = false
+							isOpen = false
+							DropdownSettings.Callback(option)
+						end)
+					end
+				end
+
+				-- Toggle dropdown
+				DropdownButton.MouseButton1Click:Connect(function()
+					isOpen = not isOpen
+					OptionsFrame.Visible = isOpen
+					if isOpen then
+						UpdateOptions()
+					end
+				end)
+
+				-- Close dropdown when clicking outside
+				UserInputService.InputBegan:Connect(function(input)
+					if input.UserInputType == Enum.UserInputType.MouseButton1 and isOpen then
+						local mousePos = UserInputService:GetMouseLocation()
+						local dropdownPos = DropdownFrame.AbsolutePosition
+						local dropdownSize = DropdownFrame.AbsoluteSize
+						local optionsSize = OptionsFrame.AbsoluteSize
+
+						if mousePos.X < dropdownPos.X or mousePos.X > dropdownPos.X + dropdownSize.X or
+						   mousePos.Y < dropdownPos.Y or mousePos.Y > dropdownPos.Y + dropdownSize.Y + optionsSize.Y then
+							OptionsFrame.Visible = false
+							isOpen = false
+						end
+					end
+				end)
+
+				-- Initialize options
+				UpdateOptions()
+
+				local DropdownObject = {}
+				function DropdownObject:Set(Option)
+					DropdownSettings.CurrentOption = Option
+					DropdownButton.Text = DropdownSettings.Name .. ": " .. Option
+					DropdownSettings.Callback(Option)
+				end
+
+				function DropdownObject:Refresh(Options, CurrentOption)
+					DropdownSettings.Options = Options
+					if CurrentOption then
+						DropdownSettings.CurrentOption = CurrentOption
+						DropdownButton.Text = DropdownSettings.Name .. ": " .. CurrentOption
+					end
+					UpdateOptions()
+				end
+
+				return DropdownObject
+			end
+
+			return Section
+		end
+
+		return Tab
+	end
+
+	return Window
+end
+
+return Rayfield
