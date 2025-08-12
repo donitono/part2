@@ -85,6 +85,27 @@ function Rayfield:CreateWindow(Settings)
 	Main.BorderSizePixel = 0
 	Main.Position = UDim2.new(0.5, -300, 0.5, -200)
 	Main.Size = UDim2.new(0, 600, 0, 400)
+	
+	-- Mobile optimization - make smaller like Delta UI
+	if UserInputService.TouchEnabled then
+		local screenSize = workspace.CurrentCamera.ViewportSize
+		local isLandscape = screenSize.X > screenSize.Y
+		
+		if isLandscape then
+			-- Ultra compact for landscape like Delta
+			local width = math.min(screenSize.X * 0.35, 320)
+			local height = math.min(screenSize.Y * 0.65, 250)
+			Main.Size = UDim2.new(0, width, 0, height)
+			Main.Position = UDim2.new(0.5, -width/2, 0.5, -height/2)
+		else
+			-- Compact for portrait like Delta  
+			local width = math.min(screenSize.X * 0.70, 280)
+			local height = math.min(screenSize.Y * 0.55, 350)
+			Main.Size = UDim2.new(0, width, 0, height)
+			Main.Position = UDim2.new(0.5, -width/2, 0.5, -height/2)
+		end
+	end
+	
 	Main.Parent = RayfieldLibrary
 
 	-- Add UICorner
@@ -104,7 +125,7 @@ function Rayfield:CreateWindow(Settings)
 	Topbar.BackgroundColor3 = Color3.fromRGB(25, 25, 25)
 	Topbar.BorderSizePixel = 0
 	Topbar.Position = UDim2.new(0, 0, 0, 0)
-	Topbar.Size = UDim2.new(1, 0, 0, 40)
+	Topbar.Size = UDim2.new(1, 0, 0, 25)  -- Reduced from 40 to 25 for Delta-like compact
 	Topbar.Parent = Main
 
 	-- Add UICorner to Topbar
@@ -129,8 +150,8 @@ function Rayfield:CreateWindow(Settings)
 	local TabContainer = Instance.new("Frame")
 	TabContainer.Name = "TabContainer"
 	TabContainer.BackgroundTransparency = 1
-	TabContainer.Position = UDim2.new(0, 0, 0, 40)
-	TabContainer.Size = UDim2.new(0, 150, 1, -40)
+	TabContainer.Position = UDim2.new(0, 0, 0, 25)  -- Adjusted for smaller topbar
+	TabContainer.Size = UDim2.new(0, 120, 1, -25)   -- Reduced width from 150 to 120
 	TabContainer.Parent = Main
 
 	-- Create Tab List with scrolling
@@ -140,7 +161,7 @@ function Rayfield:CreateWindow(Settings)
 	TabList.BorderSizePixel = 0
 	TabList.Position = UDim2.new(0, 0, 0, 0)
 	TabList.Size = UDim2.new(1, 0, 1, 0)
-	TabList.ScrollBarThickness = 5
+	TabList.ScrollBarThickness = 3  -- Thinner scrollbar
 	TabList.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
 	TabList.CanvasSize = UDim2.new(0, 0, 0, 0)
 	TabList.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -150,15 +171,15 @@ function Rayfield:CreateWindow(Settings)
 	-- Add UIListLayout to TabList
 	local TabListLayout = Instance.new("UIListLayout")
 	TabListLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	TabListLayout.Padding = UDim.new(0, 2)
+	TabListLayout.Padding = UDim.new(0, 1)  -- Reduced padding from 2 to 1
 	TabListLayout.Parent = TabList
 
 	-- Create Content Container
 	local ContentContainer = Instance.new("Frame")
 	ContentContainer.Name = "ContentContainer"
 	ContentContainer.BackgroundTransparency = 1
-	ContentContainer.Position = UDim2.new(0, 150, 0, 40)
-	ContentContainer.Size = UDim2.new(1, -150, 1, -40)
+	ContentContainer.Position = UDim2.new(0, 120, 0, 25)  -- Adjusted for smaller tab width and topbar
+	ContentContainer.Size = UDim2.new(1, -120, 1, -25)   -- Adjusted accordingly
 	ContentContainer.Parent = Main
 
 	-- Create Content with scrolling
@@ -167,7 +188,7 @@ function Rayfield:CreateWindow(Settings)
 	Content.BackgroundTransparency = 1
 	Content.Position = UDim2.new(0, 0, 0, 0)
 	Content.Size = UDim2.new(1, 0, 1, 0)
-	Content.ScrollBarThickness = 8
+	Content.ScrollBarThickness = 5  -- Thinner scrollbar
 	Content.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
 	Content.CanvasSize = UDim2.new(0, 0, 0, 0)
 	Content.AutomaticCanvasSize = Enum.AutomaticSize.Y
@@ -177,15 +198,15 @@ function Rayfield:CreateWindow(Settings)
 	-- Add UIListLayout to Content
 	local ContentLayout = Instance.new("UIListLayout")
 	ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	ContentLayout.Padding = UDim.new(0, 5)
+	ContentLayout.Padding = UDim.new(0, 3)  -- Reduced from 5 to 3
 	ContentLayout.Parent = Content
 
 	-- Add UIPadding to Content
 	local ContentPadding = Instance.new("UIPadding")
-	ContentPadding.PaddingTop = UDim.new(0, 10)
-	ContentPadding.PaddingBottom = UDim.new(0, 10)
-	ContentPadding.PaddingLeft = UDim.new(0, 10)
-	ContentPadding.PaddingRight = UDim.new(0, 10)
+	ContentPadding.PaddingTop = UDim.new(0, 5)     -- Reduced from 10 to 5
+	ContentPadding.PaddingBottom = UDim.new(0, 5)  -- Reduced from 10 to 5
+	ContentPadding.PaddingLeft = UDim.new(0, 5)    -- Reduced from 10 to 5
+	ContentPadding.PaddingRight = UDim.new(0, 5)   -- Reduced from 10 to 5
 	ContentPadding.Parent = Content
 
 	-- Mobile landscape scroll optimization
@@ -294,7 +315,7 @@ function Rayfield:CreateWindow(Settings)
 		TabButton.Name = Name
 		TabButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 		TabButton.BorderSizePixel = 0
-		TabButton.Size = UDim2.new(1, 0, 0, 35)
+		TabButton.Size = UDim2.new(1, 0, 0, 25)  -- Reduced from 35 to 25 for compact Delta-style
 		TabButton.Font = Enum.Font.SourceSans
 		TabButton.Text = Name
 		TabButton.TextColor3 = Color3.fromRGB(200, 200, 200)
@@ -303,7 +324,7 @@ function Rayfield:CreateWindow(Settings)
 
 		-- Add UICorner to TabButton
 		local TabButtonCorner = Instance.new("UICorner")
-		TabButtonCorner.CornerRadius = UDim.new(0, 5)
+		TabButtonCorner.CornerRadius = UDim.new(0, 3)  -- Smaller corner radius
 		TabButtonCorner.Parent = TabButton
 
 		-- Create Tab Content
