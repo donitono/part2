@@ -191,19 +191,6 @@ function Rayfield:CreateWindow(Settings)
 	ScrollFrame.AutomaticCanvasSize = Enum.AutomaticSize.Y
 	ScrollFrame.Parent = ContentFrame
 
-	-- Content Layout
-	local ContentLayout = Instance.new("UIListLayout")
-	ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
-	ContentLayout.Padding = UDim.new(0, 8)
-	ContentLayout.Parent = ScrollFrame
-
-	local ContentPadding = Instance.new("UIPadding")
-	ContentPadding.PaddingTop = UDim.new(0, 8)
-	ContentPadding.PaddingBottom = UDim.new(0, 8)
-	ContentPadding.PaddingLeft = UDim.new(0, 8)
-	ContentPadding.PaddingRight = UDim.new(0, 8)
-	ContentPadding.Parent = ScrollFrame
-
 	-- Window Object
 	local Window = {}
 	CurrentWindow = Window
@@ -266,24 +253,424 @@ function Rayfield:CreateWindow(Settings)
 			CurrentTab = Tab
 		end
 
+		-- Add methods to Tab
+		function Tab:CreateParagraph(Settings)
+			return Window:CreateParagraph(Settings)
+		end
+		
+		function Tab:CreateButton(Settings)
+			return Window:CreateButton(Settings)
+		end
+		
+		function Tab:CreateToggle(Settings)
+			return Window:CreateToggle(Settings)
+		end
+		
+		function Tab:CreateSlider(Settings)
+			return Window:CreateSlider(Settings)
+		end
+		
+		function Tab:CreateInput(Settings)
+			return Window:CreateInput(Settings)
+		end
+		
+		function Tab:CreateDropdown(Settings)
+			return Window:CreateDropdown(Settings)
+		end
+
 		return Tab
+	end
+
+	-- Window Methods
+	function Window:CreateParagraph(Settings)
+		if not CurrentTab then return end
+		
+		local Container = Instance.new("Frame")
+		Container.Size = UDim2.new(1, 0, 0, 0)
+		Container.BackgroundTransparency = 1
+		Container.AutomaticSize = Enum.AutomaticSize.Y
+		Container.Parent = CurrentTab.Content
+
+		if Settings.Title then
+			local Title = Instance.new("TextLabel")
+			Title.Size = UDim2.new(1, 0, 0, 20)
+			Title.BackgroundTransparency = 1
+			Title.Text = Settings.Title
+			Title.TextColor3 = Color3.fromRGB(255, 255, 255)
+			Title.Font = Enum.Font.SourceSansBold
+			Title.TextSize = 12
+			Title.TextXAlignment = Enum.TextXAlignment.Left
+			Title.Parent = Container
+		end
+
+		local Content = Instance.new("TextLabel")
+		Content.Size = UDim2.new(1, 0, 0, 0)
+		Content.Position = Settings.Title and UDim2.new(0, 0, 0, 25) or UDim2.new(0, 0, 0, 0)
+		Content.BackgroundTransparency = 1
+		Content.Text = Settings.Content or ""
+		Content.TextColor3 = Color3.fromRGB(200, 200, 200)
+		Content.Font = Enum.Font.SourceSans
+		Content.TextSize = 10
+		Content.TextWrapped = true
+		Content.TextXAlignment = Enum.TextXAlignment.Left
+		Content.TextYAlignment = Enum.TextYAlignment.Top
+		Content.AutomaticSize = Enum.AutomaticSize.Y
+		Content.Parent = Container
+
+		local Layout = Instance.new("UIListLayout")
+		Layout.SortOrder = Enum.SortOrder.LayoutOrder
+		Layout.Padding = UDim.new(0, 2)
+		Layout.Parent = Container
+
+		return Container
+	end
+
+	-- Button
+	function Window:CreateButton(Settings)
+		if not CurrentTab then return end
+		
+		local Button = Instance.new("TextButton")
+		Button.Size = UDim2.new(1, 0, 0, 30)
+		Button.BackgroundColor3 = Color3.fromRGB(60, 120, 180)
+		Button.BorderSizePixel = 0
+		Button.Text = Settings.Name or "Button"
+		Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+		Button.Font = Enum.Font.SourceSansBold
+		Button.TextSize = 11
+		Button.Parent = CurrentTab.Content
+
+		local Corner = Instance.new("UICorner")
+		Corner.CornerRadius = UDim.new(0, 6)
+		Corner.Parent = Button
+
+		Button.MouseButton1Click:Connect(function()
+			if Settings.Callback then
+				Settings.Callback()
+			end
+			
+			-- Button feedback
+			TweenService:Create(Button, TweenInfo.new(0.1), {
+				BackgroundColor3 = Color3.fromRGB(80, 140, 200)
+			}):Play()
+			
+			wait(0.1)
+			TweenService:Create(Button, TweenInfo.new(0.1), {
+				BackgroundColor3 = Color3.fromRGB(60, 120, 180)
+			}):Play()
+		end)
+
+		return Button
+	end
+
+	-- Toggle
+	function Window:CreateToggle(Settings)
+		if not CurrentTab then return end
+		
+		local Container = Instance.new("Frame")
+		Container.Size = UDim2.new(1, 0, 0, 35)
+		Container.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+		Container.BorderSizePixel = 0
+		Container.Parent = CurrentTab.Content
+
+		local ContainerCorner = Instance.new("UICorner")
+		ContainerCorner.CornerRadius = UDim.new(0, 6)
+		ContainerCorner.Parent = Container
+
+		local Label = Instance.new("TextLabel")
+		Label.Size = UDim2.new(1, -60, 1, 0)
+		Label.Position = UDim2.new(0, 10, 0, 0)
+		Label.BackgroundTransparency = 1
+		Label.Text = Settings.Name or "Toggle"
+		Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+		Label.Font = Enum.Font.SourceSans
+		Label.TextSize = 11
+		Label.TextXAlignment = Enum.TextXAlignment.Left
+		Label.Parent = Container
+
+		local ToggleButton = Instance.new("TextButton")
+		ToggleButton.Size = UDim2.new(0, 40, 0, 20)
+		ToggleButton.Position = UDim2.new(1, -50, 0.5, -10)
+		ToggleButton.BackgroundColor3 = Settings.CurrentValue and Color3.fromRGB(60, 120, 180) or Color3.fromRGB(80, 80, 80)
+		ToggleButton.BorderSizePixel = 0
+		ToggleButton.Text = ""
+		ToggleButton.Parent = Container
+
+		local ToggleCorner = Instance.new("UICorner")
+		ToggleCorner.CornerRadius = UDim.new(0.5, 0)
+		ToggleCorner.Parent = ToggleButton
+
+		local ToggleCircle = Instance.new("Frame")
+		ToggleCircle.Size = UDim2.new(0, 16, 0, 16)
+		ToggleCircle.Position = Settings.CurrentValue and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+		ToggleCircle.BackgroundColor3 = Color3.fromRGB(255, 255, 255)
+		ToggleCircle.BorderSizePixel = 0
+		ToggleCircle.Parent = ToggleButton
+
+		local CircleCorner = Instance.new("UICorner")
+		CircleCorner.CornerRadius = UDim.new(0.5, 0)
+		CircleCorner.Parent = ToggleCircle
+
+		local isToggled = Settings.CurrentValue or false
+
+		ToggleButton.MouseButton1Click:Connect(function()
+			isToggled = not isToggled
+			
+			-- Animate toggle
+			TweenService:Create(ToggleButton, TweenInfo.new(0.2), {
+				BackgroundColor3 = isToggled and Color3.fromRGB(60, 120, 180) or Color3.fromRGB(80, 80, 80)
+			}):Play()
+			
+			TweenService:Create(ToggleCircle, TweenInfo.new(0.2), {
+				Position = isToggled and UDim2.new(1, -18, 0.5, -8) or UDim2.new(0, 2, 0.5, -8)
+			}):Play()
+
+			if Settings.Callback then
+				Settings.Callback(isToggled)
+			end
+		end)
+
+		return Container
+	end
+
+	-- Slider
+	function Window:CreateSlider(Settings)
+		if not CurrentTab then return end
+		
+		local Container = Instance.new("Frame")
+		Container.Size = UDim2.new(1, 0, 0, 50)
+		Container.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+		Container.BorderSizePixel = 0
+		Container.Parent = CurrentTab.Content
+
+		local ContainerCorner = Instance.new("UICorner")
+		ContainerCorner.CornerRadius = UDim.new(0, 6)
+		ContainerCorner.Parent = Container
+
+		local Label = Instance.new("TextLabel")
+		Label.Size = UDim2.new(1, 0, 0, 20)
+		Label.Position = UDim2.new(0, 10, 0, 5)
+		Label.BackgroundTransparency = 1
+		Label.Text = Settings.Name or "Slider"
+		Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+		Label.Font = Enum.Font.SourceSans
+		Label.TextSize = 11
+		Label.TextXAlignment = Enum.TextXAlignment.Left
+		Label.Parent = Container
+
+		local ValueLabel = Instance.new("TextLabel")
+		ValueLabel.Size = UDim2.new(0, 50, 0, 20)
+		ValueLabel.Position = UDim2.new(1, -60, 0, 5)
+		ValueLabel.BackgroundTransparency = 1
+		ValueLabel.Text = tostring(Settings.CurrentValue or Settings.Range[1])
+		ValueLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+		ValueLabel.Font = Enum.Font.SourceSans
+		ValueLabel.TextSize = 10
+		ValueLabel.TextXAlignment = Enum.TextXAlignment.Right
+		ValueLabel.Parent = Container
+
+		local SliderFrame = Instance.new("Frame")
+		SliderFrame.Size = UDim2.new(1, -20, 0, 4)
+		SliderFrame.Position = UDim2.new(0, 10, 1, -15)
+		SliderFrame.BackgroundColor3 = Color3.fromRGB(80, 80, 80)
+		SliderFrame.BorderSizePixel = 0
+		SliderFrame.Parent = Container
+
+		local SliderCorner = Instance.new("UICorner")
+		SliderCorner.CornerRadius = UDim.new(0.5, 0)
+		SliderCorner.Parent = SliderFrame
+
+		local SliderButton = Instance.new("TextButton")
+		SliderButton.Size = UDim2.new(0, 12, 0, 12)
+		SliderButton.Position = UDim2.new(0, -6, 0.5, -6)
+		SliderButton.BackgroundColor3 = Color3.fromRGB(60, 120, 180)
+		SliderButton.BorderSizePixel = 0
+		SliderButton.Text = ""
+		SliderButton.Parent = SliderFrame
+
+		local ButtonCorner = Instance.new("UICorner")
+		ButtonCorner.CornerRadius = UDim.new(0.5, 0)
+		ButtonCorner.Parent = SliderButton
+
+		local Range = Settings.Range or {0, 100}
+		local Increment = Settings.Increment or 1
+		local CurrentValue = Settings.CurrentValue or Range[1]
+
+		-- Set initial position
+		local InitialPercentage = (CurrentValue - Range[1]) / (Range[2] - Range[1])
+		SliderButton.Position = UDim2.new(InitialPercentage, -6, 0.5, -6)
+
+		local dragging = false
+
+		SliderButton.InputBegan:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				dragging = true
+			end
+		end)
+
+		UserInputService.InputEnded:Connect(function(input)
+			if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+				dragging = false
+			end
+		end)
+
+		UserInputService.InputChanged:Connect(function(input)
+			if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+				local SliderPosition = SliderFrame.AbsolutePosition.X
+				local SliderSize = SliderFrame.AbsoluteSize.X
+				local MousePosition = input.Position.X
+
+				local RelativePosition = math.clamp((MousePosition - SliderPosition) / SliderSize, 0, 1)
+				local Value = Range[1] + (Range[2] - Range[1]) * RelativePosition
+				Value = math.floor(Value / Increment + 0.5) * Increment
+				Value = math.clamp(Value, Range[1], Range[2])
+
+				CurrentValue = Value
+				ValueLabel.Text = tostring(Value)
+				SliderButton.Position = UDim2.new(RelativePosition, -6, 0.5, -6)
+
+				if Settings.Callback then
+					Settings.Callback(Value)
+				end
+			end
+		end)
+
+		return Container
+	end
+
+	-- Input
+	function Window:CreateInput(Settings)
+		if not CurrentTab then return end
+		
+		local Container = Instance.new("Frame")
+		Container.Size = UDim2.new(1, 0, 0, 60)
+		Container.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+		Container.BorderSizePixel = 0
+		Container.Parent = CurrentTab.Content
+
+		local ContainerCorner = Instance.new("UICorner")
+		ContainerCorner.CornerRadius = UDim.new(0, 6)
+		ContainerCorner.Parent = Container
+
+		local Label = Instance.new("TextLabel")
+		Label.Size = UDim2.new(1, 0, 0, 20)
+		Label.Position = UDim2.new(0, 10, 0, 5)
+		Label.BackgroundTransparency = 1
+		Label.Text = Settings.Name or "Input"
+		Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+		Label.Font = Enum.Font.SourceSans
+		Label.TextSize = 11
+		Label.TextXAlignment = Enum.TextXAlignment.Left
+		Label.Parent = Container
+
+		local InputBox = Instance.new("TextBox")
+		InputBox.Size = UDim2.new(1, -20, 0, 25)
+		InputBox.Position = UDim2.new(0, 10, 0, 30)
+		InputBox.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+		InputBox.BorderSizePixel = 0
+		InputBox.Text = ""
+		InputBox.PlaceholderText = Settings.PlaceholderText or "Enter text..."
+		InputBox.TextColor3 = Color3.fromRGB(255, 255, 255)
+		InputBox.PlaceholderColor3 = Color3.fromRGB(150, 150, 150)
+		InputBox.Font = Enum.Font.SourceSans
+		InputBox.TextSize = 10
+		InputBox.TextXAlignment = Enum.TextXAlignment.Left
+		InputBox.ClearTextOnFocus = false
+		InputBox.Parent = Container
+
+		local InputCorner = Instance.new("UICorner")
+		InputCorner.CornerRadius = UDim.new(0, 4)
+		InputCorner.Parent = InputBox
+
+		InputBox.FocusLost:Connect(function(enterPressed)
+			if Settings.Callback then
+				Settings.Callback(InputBox.Text)
+			end
+			
+			if Settings.RemoveTextAfterFocusLost then
+				InputBox.Text = ""
+			end
+		end)
+
+		return Container
+	end
+
+	-- Dropdown
+	function Window:CreateDropdown(Settings)
+		if not CurrentTab then return end
+		
+		local Container = Instance.new("Frame")
+		Container.Size = UDim2.new(1, 0, 0, 35)
+		Container.BackgroundColor3 = Color3.fromRGB(40, 40, 50)
+		Container.BorderSizePixel = 0
+		Container.Parent = CurrentTab.Content
+
+		local ContainerCorner = Instance.new("UICorner")
+		ContainerCorner.CornerRadius = UDim.new(0, 6)
+		ContainerCorner.Parent = Container
+
+		local Label = Instance.new("TextLabel")
+		Label.Size = UDim2.new(0.5, 0, 1, 0)
+		Label.Position = UDim2.new(0, 10, 0, 0)
+		Label.BackgroundTransparency = 1
+		Label.Text = Settings.Name or "Dropdown"
+		Label.TextColor3 = Color3.fromRGB(255, 255, 255)
+		Label.Font = Enum.Font.SourceSans
+		Label.TextSize = 11
+		Label.TextXAlignment = Enum.TextXAlignment.Left
+		Label.Parent = Container
+
+		local DropdownButton = Instance.new("TextButton")
+		DropdownButton.Size = UDim2.new(0.5, -20, 0, 25)
+		DropdownButton.Position = UDim2.new(0.5, 10, 0, 5)
+		DropdownButton.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
+		DropdownButton.BorderSizePixel = 0
+		DropdownButton.Text = Settings.CurrentOption or "Select..."
+		DropdownButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+		DropdownButton.Font = Enum.Font.SourceSans
+		DropdownButton.TextSize = 10
+		DropdownButton.Parent = Container
+
+		local DropdownCorner = Instance.new("UICorner")
+		DropdownCorner.CornerRadius = UDim.new(0, 4)
+		DropdownCorner.Parent = DropdownButton
+
+		-- Simple dropdown - for now just cycle through options
+		local Options = Settings.Options or {}
+		local CurrentIndex = 1
+		
+		for i, option in ipairs(Options) do
+			if option == Settings.CurrentOption then
+				CurrentIndex = i
+				break
+			end
+		end
+
+		DropdownButton.MouseButton1Click:Connect(function()
+			CurrentIndex = CurrentIndex + 1
+			if CurrentIndex > #Options then
+				CurrentIndex = 1
+			end
+			
+			DropdownButton.Text = Options[CurrentIndex]
+			
+			if Settings.Callback then
+				Settings.Callback(Options[CurrentIndex])
+			end
+		end)
+
+		return Container
+	end
+
+	-- Additional utility functions for window
+	function Window:Refresh()
+		-- Refresh function
 	end
 
 	return Window
 end
 
--- Tab Functions
-local function CreateElement(parent, elementType, properties)
-	local element = Instance.new(elementType)
-	for property, value in pairs(properties) do
-		element[property] = value
-	end
-	element.Parent = parent
-	return element
-end
-
--- Paragraph
-function CurrentWindow:CreateParagraph(Settings)
+-- Return the Rayfield object
+return Rayfield
 	if not CurrentTab then return end
 	
 	local Container = CreateElement(CurrentTab.Content, "Frame", {
