@@ -91,12 +91,20 @@ end
 
 print("XSAN: UI Library loaded successfully!")
 
--- Create Window
+-- Mobile/Android detection and UI scaling
+local UserInputService = game:GetService("UserInputService")
+local GuiService = game:GetService("GuiService")
+local isMobile = UserInputService.TouchEnabled and not UserInputService.KeyboardEnabled
+local screenSize = workspace.CurrentCamera.ViewportSize
+
+print("XSAN: Platform Detection - Mobile:", isMobile, "Screen Size:", screenSize.X .. "x" .. screenSize.Y)
+
+-- Create Window with mobile-optimized settings
 print("XSAN: Creating main window...")
-local Window = Rayfield:CreateWindow({
-    Name = "XSAN Fish It Pro v1.0",
+local windowConfig = {
+    Name = isMobile and "XSAN Fish It Pro Mobile" or "XSAN Fish It Pro v1.0",
     LoadingTitle = "XSAN Fish It Pro Ultimate",
-    LoadingSubtitle = "by XSAN - Ultimate Edition",
+    LoadingSubtitle = "by XSAN - Mobile Optimized",
     Theme = "DarkBlue",
     ConfigurationSaving = {
         Enabled = true,
@@ -106,29 +114,72 @@ local Window = Rayfield:CreateWindow({
     KeySystem = false,
     DisableRayfieldPrompts = false,
     DisableBuildWarnings = false
-})
+}
+
+-- Mobile specific adjustments
+if isMobile then
+    windowConfig.Size = UDim2.new(0, math.min(screenSize.X * 0.95, 400), 0, math.min(screenSize.Y * 0.8, 500))
+end
+
+local Window = Rayfield:CreateWindow(windowConfig)
 
 print("XSAN: Window created successfully!")
 
--- Fix scrolling issues for Rayfield UI
-print("XSAN: Applying scrolling fixes...")
+-- Fix scrolling issues and mobile scaling for Rayfield UI
+print("XSAN: Applying mobile fixes and scrolling fixes...")
 task.spawn(function()
     task.wait(1) -- Wait for UI to fully load
     
-    local function fixScrollingFrames()
+    local function fixUIForMobile()
         local rayfieldGui = game.Players.LocalPlayer.PlayerGui:FindFirstChild("RayfieldLibrary") or game.CoreGui:FindFirstChild("RayfieldLibrary")
         if rayfieldGui then
+            local main = rayfieldGui:FindFirstChild("Main")
+            if main and isMobile then
+                -- Mobile scaling adjustments
+                local scale = math.min(screenSize.X / 800, screenSize.Y / 600, 1)
+                
+                -- Apply mobile-friendly size
+                main.Size = UDim2.new(0, math.min(screenSize.X * 0.95, 450), 0, math.min(screenSize.Y * 0.85, 550))
+                main.Position = UDim2.new(0.5, -main.Size.X.Offset/2, 0.5, -main.Size.Y.Offset/2)
+                
+                -- Adjust text scaling for mobile
+                for _, descendant in pairs(rayfieldGui:GetDescendants()) do
+                    if descendant:IsA("TextLabel") or descendant:IsA("TextButton") then
+                        if descendant.TextScaled == false then
+                            descendant.TextScaled = true
+                        end
+                        -- Ensure minimum readable text size on mobile
+                        if descendant.TextSize < 14 and isMobile then
+                            descendant.TextSize = 16
+                        end
+                    end
+                end
+                
+                print("XSAN: Applied mobile UI scaling")
+            end
+            
+            -- Fix scrolling for all platforms
             for _, descendant in pairs(rayfieldGui:GetDescendants()) do
                 if descendant:IsA("ScrollingFrame") then
                     -- Enable proper scrolling
                     descendant.ScrollingEnabled = true
-                    descendant.ScrollBarThickness = 8
+                    descendant.ScrollBarThickness = isMobile and 12 or 8
                     descendant.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 80)
                     
                     -- Auto canvas size if supported
                     if descendant:FindFirstChild("UIListLayout") then
                         descendant.AutomaticCanvasSize = Enum.AutomaticSize.Y
                         descendant.CanvasSize = UDim2.new(0, 0, 0, 0)
+                    end
+                    
+                    -- Enable touch scrolling for mobile
+                    descendant.Active = true
+                    descendant.Selectable = true
+                    
+                    -- Mobile-specific touch improvements
+                    if isMobile then
+                        descendant.ScrollingDirection = Enum.ScrollingDirection.Y
+                        descendant.ElasticBehavior = Enum.ElasticBehavior.WhenScrollable
                     end
                     
                     print("XSAN: Fixed scrolling for", descendant.Name)
@@ -138,9 +189,15 @@ task.spawn(function()
     end
     
     -- Apply fixes multiple times to ensure they stick
-    fixScrollingFrames()
+    fixUIForMobile()
     task.wait(2)
-    fixScrollingFrames()
+    fixUIForMobile()
+    
+    -- Force refresh UI content
+    task.wait(1)
+    if Window and Window.Refresh then
+        Window:Refresh()
+    end
 end)
 
 -- Ultimate tabs with all features

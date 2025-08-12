@@ -399,6 +399,66 @@ function Rayfield:CreateWindow(Settings)
 				return Button
 			end
 
+			function Section:CreateParagraph(Settings)
+				local ParagraphSettings = {
+					Title = Settings.Title or "Paragraph",
+					Content = Settings.Content or "Content"
+				}
+
+				-- Create Paragraph Frame
+				local ParagraphFrame = Instance.new("Frame")
+				ParagraphFrame.Name = ParagraphSettings.Title
+				ParagraphFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+				ParagraphFrame.BorderSizePixel = 0
+				ParagraphFrame.Size = UDim2.new(1, 0, 0, 0)
+				ParagraphFrame.AutomaticSize = Enum.AutomaticSize.Y
+				ParagraphFrame.Parent = SectionContent
+
+				-- Add UICorner
+				local ParagraphCorner = Instance.new("UICorner")
+				ParagraphCorner.CornerRadius = UDim.new(0, 5)
+				ParagraphCorner.Parent = ParagraphFrame
+
+				-- Add UIPadding
+				local ParagraphPadding = Instance.new("UIPadding")
+				ParagraphPadding.PaddingTop = UDim.new(0, 8)
+				ParagraphPadding.PaddingBottom = UDim.new(0, 8)
+				ParagraphPadding.PaddingLeft = UDim.new(0, 10)
+				ParagraphPadding.PaddingRight = UDim.new(0, 10)
+				ParagraphPadding.Parent = ParagraphFrame
+
+				-- Create Title
+				local ParagraphTitle = Instance.new("TextLabel")
+				ParagraphTitle.Name = "Title"
+				ParagraphTitle.BackgroundTransparency = 1
+				ParagraphTitle.Size = UDim2.new(1, 0, 0, 20)
+				ParagraphTitle.Font = Enum.Font.SourceSansBold
+				ParagraphTitle.Text = ParagraphSettings.Title
+				ParagraphTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+				ParagraphTitle.TextScaled = true
+				ParagraphTitle.TextXAlignment = Enum.TextXAlignment.Left
+				ParagraphTitle.Parent = ParagraphFrame
+
+				-- Create Content
+				local ParagraphContent = Instance.new("TextLabel")
+				ParagraphContent.Name = "Content"
+				ParagraphContent.BackgroundTransparency = 1
+				ParagraphContent.Position = UDim2.new(0, 0, 0, 25)
+				ParagraphContent.Size = UDim2.new(1, 0, 0, 0)
+				ParagraphContent.AutomaticSize = Enum.AutomaticSize.Y
+				ParagraphContent.Font = Enum.Font.SourceSans
+				ParagraphContent.Text = ParagraphSettings.Content
+				ParagraphContent.TextColor3 = Color3.fromRGB(200, 200, 200)
+				ParagraphContent.TextScaled = false
+				ParagraphContent.TextSize = 14
+				ParagraphContent.TextWrapped = true
+				ParagraphContent.TextXAlignment = Enum.TextXAlignment.Left
+				ParagraphContent.TextYAlignment = Enum.TextYAlignment.Top
+				ParagraphContent.Parent = ParagraphFrame
+
+				return ParagraphFrame
+			end
+
 			function Section:CreateToggle(Settings)
 				local ToggleSettings = {
 					Name = Settings.Name or "Toggle",
@@ -636,6 +696,201 @@ function Rayfield:CreateWindow(Settings)
 			end
 
 			return Section
+		end
+
+		-- Tab-level functions (for direct use without sections)
+		function Tab:CreateParagraph(Settings)
+			local ParagraphSettings = {
+				Title = Settings.Title or "Paragraph",
+				Content = Settings.Content or "Content"
+			}
+
+			-- Create Paragraph Frame directly in tab content
+			local ParagraphFrame = Instance.new("Frame")
+			ParagraphFrame.Name = ParagraphSettings.Title
+			ParagraphFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+			ParagraphFrame.BorderSizePixel = 0
+			ParagraphFrame.Size = UDim2.new(1, 0, 0, 0)
+			ParagraphFrame.AutomaticSize = Enum.AutomaticSize.Y
+			ParagraphFrame.Parent = TabContent
+
+			-- Add UICorner
+			local ParagraphCorner = Instance.new("UICorner")
+			ParagraphCorner.CornerRadius = UDim.new(0, 8)
+			ParagraphCorner.Parent = ParagraphFrame
+
+			-- Add UIPadding
+			local ParagraphPadding = Instance.new("UIPadding")
+			ParagraphPadding.PaddingTop = UDim.new(0, 12)
+			ParagraphPadding.PaddingBottom = UDim.new(0, 12)
+			ParagraphPadding.PaddingLeft = UDim.new(0, 15)
+			ParagraphPadding.PaddingRight = UDim.new(0, 15)
+			ParagraphPadding.Parent = ParagraphFrame
+
+			-- Create Content Layout
+			local ContentLayout = Instance.new("UIListLayout")
+			ContentLayout.SortOrder = Enum.SortOrder.LayoutOrder
+			ContentLayout.Padding = UDim.new(0, 8)
+			ContentLayout.Parent = ParagraphFrame
+
+			-- Create Title
+			local ParagraphTitle = Instance.new("TextLabel")
+			ParagraphTitle.Name = "Title"
+			ParagraphTitle.BackgroundTransparency = 1
+			ParagraphTitle.Size = UDim2.new(1, 0, 0, 25)
+			ParagraphTitle.Font = Enum.Font.SourceSansBold
+			ParagraphTitle.Text = ParagraphSettings.Title
+			ParagraphTitle.TextColor3 = Color3.fromRGB(255, 255, 255)
+			ParagraphTitle.TextScaled = true
+			ParagraphTitle.TextXAlignment = Enum.TextXAlignment.Left
+			ParagraphTitle.LayoutOrder = 1
+			ParagraphTitle.Parent = ParagraphFrame
+
+			-- Create Content
+			local ParagraphContent = Instance.new("TextLabel")
+			ParagraphContent.Name = "Content"
+			ParagraphContent.BackgroundTransparency = 1
+			ParagraphContent.Size = UDim2.new(1, 0, 0, 0)
+			ParagraphContent.AutomaticSize = Enum.AutomaticSize.Y
+			ParagraphContent.Font = Enum.Font.SourceSans
+			ParagraphContent.Text = ParagraphSettings.Content
+			ParagraphContent.TextColor3 = Color3.fromRGB(200, 200, 200)
+			ParagraphContent.TextScaled = false
+			ParagraphContent.TextSize = 14
+			ParagraphContent.TextWrapped = true
+			ParagraphContent.TextXAlignment = Enum.TextXAlignment.Left
+			ParagraphContent.TextYAlignment = Enum.TextYAlignment.Top
+			ParagraphContent.LayoutOrder = 2
+			ParagraphContent.Parent = ParagraphFrame
+
+			return ParagraphFrame
+		end
+
+		function Tab:CreateButton(Settings)
+			local ButtonSettings = {
+				Name = Settings.Name or "Button",
+				Callback = Settings.Callback or function() end
+			}
+
+			-- Create Button directly in tab content
+			local Button = Instance.new("TextButton")
+			Button.Name = ButtonSettings.Name
+			Button.BackgroundColor3 = Color3.fromRGB(60, 60, 60)
+			Button.BorderSizePixel = 0
+			Button.Size = UDim2.new(1, 0, 0, 40)
+			Button.Font = Enum.Font.SourceSans
+			Button.Text = ButtonSettings.Name
+			Button.TextColor3 = Color3.fromRGB(255, 255, 255)
+			Button.TextScaled = true
+			Button.Parent = TabContent
+
+			-- Add UICorner
+			local ButtonCorner = Instance.new("UICorner")
+			ButtonCorner.CornerRadius = UDim.new(0, 8)
+			ButtonCorner.Parent = Button
+
+			-- Button hover effects
+			Button.MouseEnter:Connect(function()
+				TweenService:Create(Button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(80, 80, 80)}):Play()
+			end)
+
+			Button.MouseLeave:Connect(function()
+				TweenService:Create(Button, TweenInfo.new(0.2), {BackgroundColor3 = Color3.fromRGB(60, 60, 60)}):Play()
+			end)
+
+			-- Button click
+			Button.MouseButton1Click:Connect(function()
+				TweenService:Create(Button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(100, 100, 100)}):Play()
+				task.wait(0.1)
+				TweenService:Create(Button, TweenInfo.new(0.1), {BackgroundColor3 = Color3.fromRGB(80, 80, 80)}):Play()
+				ButtonSettings.Callback()
+			end)
+
+			return Button
+		end
+
+		function Tab:CreateToggle(Settings)
+			local ToggleSettings = {
+				Name = Settings.Name or "Toggle",
+				CurrentValue = Settings.CurrentValue or false,
+				Flag = Settings.Flag or nil,
+				Callback = Settings.Callback or function() end
+			}
+
+			-- Create Toggle Frame directly in tab content
+			local ToggleFrame = Instance.new("Frame")
+			ToggleFrame.Name = ToggleSettings.Name
+			ToggleFrame.BackgroundColor3 = Color3.fromRGB(50, 50, 50)
+			ToggleFrame.BorderSizePixel = 0
+			ToggleFrame.Size = UDim2.new(1, 0, 0, 40)
+			ToggleFrame.Parent = TabContent
+
+			-- Add UICorner
+			local ToggleFrameCorner = Instance.new("UICorner")
+			ToggleFrameCorner.CornerRadius = UDim.new(0, 8)
+			ToggleFrameCorner.Parent = ToggleFrame
+
+			-- Add UIPadding
+			local TogglePadding = Instance.new("UIPadding")
+			TogglePadding.PaddingLeft = UDim.new(0, 15)
+			TogglePadding.PaddingRight = UDim.new(0, 15)
+			TogglePadding.Parent = ToggleFrame
+
+			-- Create Toggle Label
+			local ToggleLabel = Instance.new("TextLabel")
+			ToggleLabel.BackgroundTransparency = 1
+			ToggleLabel.Position = UDim2.new(0, 0, 0, 0)
+			ToggleLabel.Size = UDim2.new(1, -50, 1, 0)
+			ToggleLabel.Font = Enum.Font.SourceSans
+			ToggleLabel.Text = ToggleSettings.Name
+			ToggleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+			ToggleLabel.TextScaled = true
+			ToggleLabel.TextXAlignment = Enum.TextXAlignment.Left
+			ToggleLabel.Parent = ToggleFrame
+
+			-- Create Toggle Button
+			local ToggleButton = Instance.new("TextButton")
+			ToggleButton.BackgroundColor3 = ToggleSettings.CurrentValue and Color3.fromRGB(100, 200, 100) or Color3.fromRGB(200, 100, 100)
+			ToggleButton.BorderSizePixel = 0
+			ToggleButton.Position = UDim2.new(1, -40, 0.5, -12)
+			ToggleButton.Size = UDim2.new(0, 35, 0, 24)
+			ToggleButton.Text = ToggleSettings.CurrentValue and "ON" or "OFF"
+			ToggleButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+			ToggleButton.TextScaled = true
+			ToggleButton.Font = Enum.Font.SourceSansBold
+			ToggleButton.Parent = ToggleFrame
+
+			-- Add UICorner to Toggle Button
+			local ToggleButtonCorner = Instance.new("UICorner")
+			ToggleButtonCorner.CornerRadius = UDim.new(0, 5)
+			ToggleButtonCorner.Parent = ToggleButton
+
+			-- Toggle function
+			local function Toggle()
+				ToggleSettings.CurrentValue = not ToggleSettings.CurrentValue
+				ToggleButton.Text = ToggleSettings.CurrentValue and "ON" or "OFF"
+				TweenService:Create(ToggleButton, TweenInfo.new(0.2), {
+					BackgroundColor3 = ToggleSettings.CurrentValue and Color3.fromRGB(100, 200, 100) or Color3.fromRGB(200, 100, 100)
+				}):Play()
+				ToggleSettings.Callback(ToggleSettings.CurrentValue)
+			end
+
+			ToggleButton.MouseButton1Click:Connect(Toggle)
+			ToggleFrame.InputBegan:Connect(function(input)
+				if input.UserInputType == Enum.UserInputType.MouseButton1 then
+					Toggle()
+				end
+			end)
+
+			local ToggleObject = {}
+			function ToggleObject:Set(Value)
+				ToggleSettings.CurrentValue = Value
+				ToggleButton.Text = Value and "ON" or "OFF"
+				ToggleButton.BackgroundColor3 = Value and Color3.fromRGB(100, 200, 100) or Color3.fromRGB(200, 100, 100)
+				ToggleSettings.Callback(Value)
+			end
+
+			return ToggleObject
 		end
 
 		return Tab
