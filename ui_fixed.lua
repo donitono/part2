@@ -86,21 +86,21 @@ function Rayfield:CreateWindow(Settings)
 	Main.Position = UDim2.new(0.5, -300, 0.5, -200)
 	Main.Size = UDim2.new(0, 600, 0, 400)
 	
-	-- Mobile optimization - make smaller like Delta UI
+	-- Mobile optimization - make wider for readability
 	if UserInputService.TouchEnabled then
 		local screenSize = workspace.CurrentCamera.ViewportSize
 		local isLandscape = screenSize.X > screenSize.Y
 		
 		if isLandscape then
-			-- Ultra compact for landscape like Delta
-			local width = math.min(screenSize.X * 0.35, 320)
-			local height = math.min(screenSize.Y * 0.65, 250)
+			-- Wider compact for landscape untuk text tidak terpotong
+			local width = math.min(screenSize.X * 0.45, 400)
+			local height = math.min(screenSize.Y * 0.70, 280)
 			Main.Size = UDim2.new(0, width, 0, height)
 			Main.Position = UDim2.new(0.5, -width/2, 0.5, -height/2)
 		else
-			-- Compact for portrait like Delta  
-			local width = math.min(screenSize.X * 0.70, 280)
-			local height = math.min(screenSize.Y * 0.55, 350)
+			-- Compact for portrait tapi readable
+			local width = math.min(screenSize.X * 0.75, 300)
+			local height = math.min(screenSize.Y * 0.60, 380)
 			Main.Size = UDim2.new(0, width, 0, height)
 			Main.Position = UDim2.new(0.5, -width/2, 0.5, -height/2)
 		end
@@ -151,7 +151,7 @@ function Rayfield:CreateWindow(Settings)
 	TabContainer.Name = "TabContainer"
 	TabContainer.BackgroundTransparency = 1
 	TabContainer.Position = UDim2.new(0, 0, 0, 25)  -- Adjusted for smaller topbar
-	TabContainer.Size = UDim2.new(0, 120, 1, -25)   -- Reduced width from 150 to 120
+	TabContainer.Size = UDim2.new(0, 140, 1, -25)   -- Increased width from 120 to 140 for readability
 	TabContainer.Parent = Main
 
 	-- Create Tab List with scrolling
@@ -209,8 +209,8 @@ function Rayfield:CreateWindow(Settings)
 	local ContentContainer = Instance.new("Frame")
 	ContentContainer.Name = "ContentContainer"
 	ContentContainer.BackgroundTransparency = 1
-	ContentContainer.Position = UDim2.new(0, 120, 0, 25)  -- Adjusted for smaller tab width and topbar
-	ContentContainer.Size = UDim2.new(1, -120, 1, -25)   -- Adjusted accordingly
+	ContentContainer.Position = UDim2.new(0, 140, 0, 25)  -- Adjusted for wider tab width
+	ContentContainer.Size = UDim2.new(1, -140, 1, -25)   -- Adjusted accordingly
 	ContentContainer.Parent = Main
 
 	-- Create Content with scrolling
@@ -376,11 +376,12 @@ function Rayfield:CreateWindow(Settings)
 		TabButton.Name = Name
 		TabButton.BackgroundColor3 = Color3.fromRGB(45, 45, 45)
 		TabButton.BorderSizePixel = 0
-		TabButton.Size = UDim2.new(1, 0, 0, 25)  -- Reduced from 35 to 25 for compact Delta-style
+		TabButton.Size = UDim2.new(1, 0, 0, 28)  -- Increased from 25 to 28 for better readability
 		TabButton.Font = Enum.Font.SourceSans
 		TabButton.Text = Name
 		TabButton.TextColor3 = Color3.fromRGB(200, 200, 200)
 		TabButton.TextScaled = true
+		TabButton.TextWrapped = true  -- Allow text wrapping
 		TabButton.Parent = TabList
 
 		-- Add UICorner to TabButton
@@ -449,7 +450,7 @@ function Rayfield:CreateWindow(Settings)
 		TabButton.MouseButton1Click:Connect(function()
 			-- Hide all other tabs
 			for _, tabContent in pairs(Content:GetChildren()) do
-				if tabContent:IsA("Frame") and tabContent.Name:find("_Content") then
+				if tabContent:IsA("ScrollingFrame") and tabContent.Name:find("_Content") then
 					tabContent.Visible = false
 				end
 			end
@@ -467,6 +468,9 @@ function Rayfield:CreateWindow(Settings)
 			TabButton.BackgroundColor3 = Color3.fromRGB(70, 130, 200)
 			TabButton.TextColor3 = Color3.fromRGB(255, 255, 255)
 			currentTab = Tab
+			
+			-- Reset scroll position for clean view
+			TabContent.CanvasPosition = Vector2.new(0, 0)
 		end)
 
 		-- If this is the first tab, select it
