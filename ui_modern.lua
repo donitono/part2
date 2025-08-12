@@ -26,12 +26,13 @@ local CoreGui = getService("CoreGui")
 local Player = Players.LocalPlayer
 local PlayerGui = Player:WaitForChild("PlayerGui")
 
--- Create main ScreenGui
+-- Create main ScreenGui with proper Z-Index
 local RayfieldLibrary = Instance.new("ScreenGui")
 RayfieldLibrary.Name = "RayfieldLibrary"
 RayfieldLibrary.ResetOnSpawn = false
 RayfieldLibrary.IgnoreGuiInset = true
 RayfieldLibrary.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+RayfieldLibrary.DisplayOrder = 10 -- Lower display order so notifications appear on top
 
 -- Try to parent to CoreGui first, then fallback to PlayerGui
 local success = pcall(function()
@@ -75,16 +76,16 @@ function Rayfield:CreateWindow(Settings)
 	Main.Active = true
 	Main.Draggable = true
 	
-	-- Compact size untuk mobile landscape
+	-- Better size untuk mobile landscape - tidak terlalu ke atas
 	if isMobile and isLandscape then
-		Main.Size = UDim2.new(0, 600, 0, 320) -- Compact size
-		Main.Position = UDim2.new(0.5, -300, 0.5, -160)
+		Main.Size = UDim2.new(0, 650, 0, 360) -- Lebih besar dan proporsional
+		Main.Position = UDim2.new(0.5, -325, 0.5, -180) -- Lebih centered
 	elseif isMobile then
-		Main.Size = UDim2.new(0, 350, 0, 400)
-		Main.Position = UDim2.new(0.5, -175, 0.5, -200)
+		Main.Size = UDim2.new(0, 350, 0, 450)
+		Main.Position = UDim2.new(0.5, -175, 0.5, -225)
 	else
-		Main.Size = UDim2.new(0, 600, 0, 400)
-		Main.Position = UDim2.new(0.5, -300, 0.5, -200)
+		Main.Size = UDim2.new(0, 700, 0, 450) -- Desktop lebih besar
+		Main.Position = UDim2.new(0.5, -350, 0.5, -225)
 	end
 	
 	Main.Parent = RayfieldLibrary

@@ -31,10 +31,80 @@ local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
 local StarterGui = game:GetService("StarterGui")
 
--- Notification system
+-- Enhanced notification system with proper Z-Index
 local function Notify(title, text, duration)
     duration = duration or 3
     pcall(function()
+        -- Create custom notification that appears in front
+        local ScreenGui = Instance.new("ScreenGui")
+        ScreenGui.Name = "XSAN_Notification"
+        ScreenGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+        ScreenGui.ResetOnSpawn = false
+        
+        -- Try CoreGui first for better visibility
+        local success = pcall(function()
+            ScreenGui.Parent = game.CoreGui
+        end)
+        if not success then
+            ScreenGui.Parent = game.Players.LocalPlayer.PlayerGui
+        end
+        
+        local NotificationFrame = Instance.new("Frame")
+        NotificationFrame.Size = UDim2.new(0, 300, 0, 80)
+        NotificationFrame.Position = UDim2.new(1, -320, 0, 20)
+        NotificationFrame.BackgroundColor3 = Color3.fromRGB(35, 35, 50)
+        NotificationFrame.BorderSizePixel = 0
+        NotificationFrame.ZIndex = 1000 -- Very high Z-Index
+        NotificationFrame.Parent = ScreenGui
+        
+        local Corner = Instance.new("UICorner")
+        Corner.CornerRadius = UDim.new(0, 8)
+        Corner.Parent = NotificationFrame
+        
+        local Stroke = Instance.new("UIStroke")
+        Stroke.Color = Color3.fromRGB(70, 130, 200)
+        Stroke.Thickness = 2
+        Stroke.Parent = NotificationFrame
+        
+        local TitleLabel = Instance.new("TextLabel")
+        TitleLabel.Size = UDim2.new(1, -10, 0.5, 0)
+        TitleLabel.Position = UDim2.new(0, 5, 0, 5)
+        TitleLabel.BackgroundTransparency = 1
+        TitleLabel.Text = title or "XSAN Fish It Pro"
+        TitleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
+        TitleLabel.TextScaled = true
+        TitleLabel.Font = Enum.Font.SourceSansBold
+        TitleLabel.ZIndex = 1001
+        TitleLabel.Parent = NotificationFrame
+        
+        local ContentLabel = Instance.new("TextLabel")
+        ContentLabel.Size = UDim2.new(1, -10, 0.5, -5)
+        ContentLabel.Position = UDim2.new(0, 5, 0.5, 0)
+        ContentLabel.BackgroundTransparency = 1
+        ContentLabel.Text = text or "Notification"
+        ContentLabel.TextColor3 = Color3.fromRGB(200, 200, 200)
+        ContentLabel.TextScaled = true
+        ContentLabel.Font = Enum.Font.SourceSans
+        ContentLabel.ZIndex = 1001
+        ContentLabel.Parent = NotificationFrame
+        
+        -- Animate in
+        TweenService:Create(NotificationFrame, TweenInfo.new(0.5, Enum.EasingStyle.Back), {
+            Position = UDim2.new(1, -320, 0, 20)
+        }):Play()
+        
+        -- Auto dismiss
+        task.spawn(function()
+            task.wait(duration)
+            TweenService:Create(NotificationFrame, TweenInfo.new(0.3, Enum.EasingStyle.Quad), {
+                Position = UDim2.new(1, 50, 0, 20),
+                BackgroundTransparency = 1
+            }):Play()
+            task.wait(0.3)
+            ScreenGui:Destroy()
+        end)
+        
+        -- Also try default notification as backup
         StarterGui:SetCore("SendNotification", {
             Title = title or "XSAN Fish It Pro",
             Text = text or "Notification", 
@@ -417,14 +487,28 @@ TeleportTab:CreateParagraph({
     Content = "Teleport instantly to any fishing location or shop. Updated coordinates for all areas!"
 })
 
--- Common teleport locations
+-- Fish It accurate teleport locations
 local teleportLocations = {
-    ["🏠 Spawn"] = {x = 0, y = 10, z = 0},
-    ["🏪 Shop"] = {x = 100, y = 5, z = 50},
-    ["🌊 Ocean"] = {x = 200, y = 3, z = 100},
-    ["🏔️ Mountain Lake"] = {x = -150, y = 25, z = 200},
-    ["🌅 Sunset Pier"] = {x = 300, y = 8, z = -100},
-    ["🏝️ Secret Island"] = {x = -200, y = 15, z = -200}
+    -- Main Areas
+    ["🏠 Spawn"] = {x = 1, y = 18, z = 134},
+    ["🏪 Shop (Alex)"] = {x = -28.43, y = 4.50, z = 2891.28},
+    ["🏪 Shop (Joe)"] = {x = 112.01, y = 4.75, z = 2877.32},
+    ["🏪 Shop (Seth)"] = {x = 72.02, y = 4.58, z = 2885.28},
+    ["🎣 Rod Shop (Marc)"] = {x = 454, y = 150, z = 229},
+    ["⚓ Shipwright"] = {x = 343, y = 135, z = 271},
+    ["📦 Storage (Henry)"] = {x = 491, y = 150, z = 272},
+    
+    -- Fishing Spots
+    ["🌊 Ocean (Starter)"] = {x = 0, y = 20, z = 200},
+    ["🏔️ Mountain Lake"] = {x = -1800, y = 150, z = 900},
+    ["🏝️ Coral Reef"] = {x = 500, y = 130, z = -200},
+    ["🌅 Deep Ocean"] = {x = 1000, y = 130, z = 1000},
+    ["❄️ Ice Lake"] = {x = -1200, y = 140, z = -800},
+    ["� Lava Pool"] = {x = 800, y = 160, z = 800},
+    
+    -- Events & Special
+    ["🌟 Isonade Event"] = {x = -1442, y = 135, z = 1006},
+    ["🦈 Great White Event"] = {x = 1082, y = 124, z = -924}
 }
 
 local function teleportTo(position)
@@ -716,6 +800,150 @@ SettingsTab:CreateButton({
 -- Final setup
 print("XSAN: Modern UI setup complete!")
 Notify("✅ Ready!", "XSAN Fish It Pro Ultimate v2.0 loaded successfully! Use the tab navigation for best experience.")
+
+-- ═══════════════════════════════════════════════════════════════
+-- FLOATING TOGGLE BUTTON - Hide/Show UI
+-- ═══════════════════════════════════════════════════════════════
+
+print("XSAN: Creating floating toggle button...")
+task.spawn(function()
+    task.wait(1) -- Wait for UI to fully load
+    
+    local Players = game:GetService("Players")
+    local UserInputService = game:GetService("UserInputService")
+    local TweenService = game:GetService("TweenService")
+    local LocalPlayer = Players.LocalPlayer
+    local PlayerGui = LocalPlayer:WaitForChild("PlayerGui")
+    
+    -- Create floating button ScreenGui
+    local FloatingButtonGui = Instance.new("ScreenGui")
+    FloatingButtonGui.Name = "XSAN_FloatingButton"
+    FloatingButtonGui.ResetOnSpawn = false
+    FloatingButtonGui.IgnoreGuiInset = true
+    FloatingButtonGui.ZIndexBehavior = Enum.ZIndexBehavior.Sibling
+    
+    -- Try to parent to CoreGui first, then fallback to PlayerGui
+    local success = pcall(function()
+        FloatingButtonGui.Parent = game.CoreGui
+    end)
+    if not success then
+        FloatingButtonGui.Parent = PlayerGui
+    end
+    
+    -- Create floating button
+    local FloatingButton = Instance.new("TextButton")
+    FloatingButton.Name = "ToggleButton"
+    FloatingButton.Size = UDim2.new(0, isMobile and 70 or 60, 0, isMobile and 70 or 60)
+    FloatingButton.Position = UDim2.new(0, 20, 0.5, -35)
+    FloatingButton.BackgroundColor3 = Color3.fromRGB(70, 130, 200)
+    FloatingButton.BorderSizePixel = 0
+    FloatingButton.Text = "🎣"
+    FloatingButton.TextColor3 = Color3.fromRGB(255, 255, 255)
+    FloatingButton.TextScaled = true
+    FloatingButton.Font = Enum.Font.SourceSansBold
+    FloatingButton.Parent = FloatingButtonGui
+    
+    -- Add UICorner for rounded button
+    local ButtonCorner = Instance.new("UICorner")
+    ButtonCorner.CornerRadius = UDim.new(0.5, 0) -- Perfect circle
+    ButtonCorner.Parent = FloatingButton
+    
+    -- Add UIStroke for better visibility
+    local ButtonStroke = Instance.new("UIStroke")
+    ButtonStroke.Color = Color3.fromRGB(255, 255, 255)
+    ButtonStroke.Thickness = 2
+    ButtonStroke.Transparency = 0.3
+    ButtonStroke.Parent = FloatingButton
+    
+    -- Variables
+    local isUIVisible = true
+    local dragging = false
+    local dragInput
+    local dragStart
+    local startPos
+    
+    -- Get Rayfield GUI reference
+    local function getRayfieldGui()
+        return LocalPlayer.PlayerGui:FindFirstChild("RayfieldLibrary") or game.CoreGui:FindFirstChild("RayfieldLibrary")
+    end
+    
+    -- Toggle UI visibility function
+    local function toggleUI()
+        local rayfieldGui = getRayfieldGui()
+        if rayfieldGui then
+            isUIVisible = not isUIVisible
+            
+            -- Update button appearance
+            if isUIVisible then
+                FloatingButton.Text = "🎣"
+                FloatingButton.BackgroundColor3 = Color3.fromRGB(70, 130, 200)
+                rayfieldGui.Enabled = true
+                
+                -- Animate show
+                rayfieldGui.Main.BackgroundTransparency = 1
+                TweenService:Create(rayfieldGui.Main, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.Out), {
+                    BackgroundTransparency = 0
+                }):Play()
+                
+                Notify("UI Toggle", "XSAN Fish It Pro Modern UI shown!")
+            else
+                FloatingButton.Text = "👁"
+                FloatingButton.BackgroundColor3 = Color3.fromRGB(200, 100, 100)
+                
+                -- Animate hide
+                TweenService:Create(rayfieldGui.Main, TweenInfo.new(0.3, Enum.EasingStyle.Back, Enum.EasingDirection.In), {
+                    BackgroundTransparency = 1
+                }):Play()
+                
+                task.wait(0.3)
+                rayfieldGui.Enabled = false
+                Notify("UI Toggle", "UI hidden! Use floating button to show.")
+            end
+        end
+    end
+    
+    -- Make button draggable
+    local function updateDrag(input)
+        local delta = input.Position - dragStart
+        FloatingButton.Position = UDim2.new(startPos.X.Scale, startPos.X.Offset + delta.X, startPos.Y.Scale, startPos.Y.Offset + delta.Y)
+    end
+    
+    FloatingButton.InputBegan:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = true
+            dragStart = input.Position
+            startPos = FloatingButton.Position
+        end
+    end)
+    
+    UserInputService.InputChanged:Connect(function(input)
+        if dragging and (input.UserInputType == Enum.UserInputType.MouseMovement or input.UserInputType == Enum.UserInputType.Touch) then
+            updateDrag(input)
+        end
+    end)
+    
+    UserInputService.InputEnded:Connect(function(input)
+        if input.UserInputType == Enum.UserInputType.MouseButton1 or input.UserInputType == Enum.UserInputType.Touch then
+            dragging = false
+        end
+    end)
+    
+    -- Click to toggle (only if not dragging significantly)
+    FloatingButton.MouseButton1Click:Connect(function()
+        if not dragging then
+            toggleUI()
+        end
+    end)
+    
+    -- Keyboard shortcut for toggle (H key)
+    UserInputService.InputBegan:Connect(function(input, gameProcessed)
+        if not gameProcessed and input.KeyCode == Enum.KeyCode.H then
+            toggleUI()
+        end
+    end)
+    
+    print("XSAN: Floating toggle button created successfully!")
+end)
 
 -- Auto-detection and smart features
 task.spawn(function()
