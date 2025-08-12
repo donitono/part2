@@ -24,11 +24,11 @@ screen.Name = "UnifiedToolsInterface"
 screen.Parent = CoreGui
 screen.ResetOnSpawn = false
 
--- Main container (optimized for landscape)
+-- Main container (compact untuk landscape mobile)
 local mainFrame = Instance.new("Frame")
 mainFrame.Parent = screen
-mainFrame.Size = UDim2.new(0, 800, 0, 450)
-mainFrame.Position = UDim2.new(0.5, -400, 0.5, -225)
+mainFrame.Size = UDim2.new(0, 600, 0, 320) -- Reduced from 800x450 to 600x320
+mainFrame.Position = UDim2.new(0.5, -300, 0.5, -160)
 mainFrame.BackgroundColor3 = Color3.fromRGB(25, 25, 35)
 mainFrame.BorderSizePixel = 0
 mainFrame.Active = true
@@ -45,94 +45,94 @@ gradient.Color = ColorSequence.new{
 }
 gradient.Rotation = 45
 
--- Floating toggle button (single main button)
+-- Floating toggle button (compact untuk mobile landscape)
 local floatingBtn = Instance.new("TextButton")
 floatingBtn.Parent = screen
-floatingBtn.Size = UDim2.new(0, 70, 0, 70)
-floatingBtn.Position = UDim2.new(1, -90, 0, 20)
+floatingBtn.Size = UDim2.new(0, 55, 0, 55) -- Reduced from 70x70 to 55x55
+floatingBtn.Position = UDim2.new(1, -70, 0, 15) -- Adjusted position
 floatingBtn.Text = "🔧"
 floatingBtn.BackgroundColor3 = Color3.fromRGB(60, 120, 200)
 floatingBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 floatingBtn.Font = Enum.Font.SourceSansBold
-floatingBtn.TextSize = 28
+floatingBtn.TextSize = 22 -- Reduced from 28 to 22
 floatingBtn.BorderSizePixel = 0
 floatingBtn.ZIndex = 10
 Instance.new("UICorner", floatingBtn).CornerRadius = UDim.new(0.5, 0)
 
--- Title bar
+-- Title bar (compact)
 local titleBar = Instance.new("Frame")
 titleBar.Parent = mainFrame
-titleBar.Size = UDim2.new(1, 0, 0, 50)
+titleBar.Size = UDim2.new(1, 0, 0, 35) -- Reduced from 50 to 35
 titleBar.BackgroundColor3 = Color3.fromRGB(40, 40, 60)
 titleBar.BorderSizePixel = 0
 Instance.new("UICorner", titleBar).CornerRadius = UDim.new(0, 12)
 
 local titleLabel = Instance.new("TextLabel")
 titleLabel.Parent = titleBar
-titleLabel.Size = UDim2.new(1, -100, 1, 0)
-titleLabel.Position = UDim2.new(0, 10, 0, 0)
+titleLabel.Size = UDim2.new(1, -80, 1, 0) -- Adjusted for smaller close button
+titleLabel.Position = UDim2.new(0, 8, 0, 0)
 titleLabel.BackgroundTransparency = 1
-titleLabel.Text = "🔧 XSAN Tools Suite - Unified Interface"
+titleLabel.Text = "🔧 XSAN Tools Suite"
 titleLabel.TextColor3 = Color3.fromRGB(255, 255, 255)
 titleLabel.Font = Enum.Font.SourceSansBold
-titleLabel.TextSize = 18
+titleLabel.TextSize = 14 -- Reduced from 18 to 14
 titleLabel.TextXAlignment = Enum.TextXAlignment.Left
 
--- Close button
+-- Close button (smaller)
 local closeBtn = Instance.new("TextButton")
 closeBtn.Parent = titleBar
-closeBtn.Size = UDim2.new(0, 40, 0, 40)
-closeBtn.Position = UDim2.new(1, -45, 0, 5)
+closeBtn.Size = UDim2.new(0, 30, 0, 25) -- Reduced size
+closeBtn.Position = UDim2.new(1, -35, 0, 5)
 closeBtn.Text = "✖"
 closeBtn.BackgroundColor3 = Color3.fromRGB(200, 80, 80)
 closeBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 closeBtn.Font = Enum.Font.SourceSansBold
-closeBtn.TextSize = 16
+closeBtn.TextSize = 12 -- Reduced from 16 to 12
 closeBtn.BorderSizePixel = 0
-Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", closeBtn).CornerRadius = UDim.new(0, 6)
 
--- Tab container
+-- Tab container (compact)
 local tabContainer = Instance.new("Frame")
 tabContainer.Parent = mainFrame
-tabContainer.Size = UDim2.new(1, -20, 0, 40)
-tabContainer.Position = UDim2.new(0, 10, 0, 60)
+tabContainer.Size = UDim2.new(1, -16, 0, 32) -- Reduced height and padding
+tabContainer.Position = UDim2.new(0, 8, 0, 40) -- Adjusted for smaller title bar
 tabContainer.BackgroundTransparency = 1
 
 local tabLayout = Instance.new("UIListLayout")
 tabLayout.Parent = tabContainer
 tabLayout.FillDirection = Enum.FillDirection.Horizontal
 tabLayout.HorizontalAlignment = Enum.HorizontalAlignment.Left
-tabLayout.Padding = UDim.new(0, 5)
+tabLayout.Padding = UDim.new(0, 3) -- Reduced padding
 
--- Content area
+-- Content area (compact)
 local contentFrame = Instance.new("Frame")
 contentFrame.Parent = mainFrame
-contentFrame.Size = UDim2.new(1, -20, 1, -120)
-contentFrame.Position = UDim2.new(0, 10, 0, 110)
+contentFrame.Size = UDim2.new(1, -16, 1, -85) -- Adjusted for compact layout
+contentFrame.Position = UDim2.new(0, 8, 0, 77) -- Adjusted position
 contentFrame.BackgroundColor3 = Color3.fromRGB(30, 30, 40)
 contentFrame.BorderSizePixel = 0
-Instance.new("UICorner", contentFrame).CornerRadius = UDim.new(0, 8)
+Instance.new("UICorner", contentFrame).CornerRadius = UDim.new(0, 6)
 
--- Scrollable content
+-- Scrollable content (compact)
 local scrollFrame = Instance.new("ScrollingFrame")
 scrollFrame.Parent = contentFrame
-scrollFrame.Size = UDim2.new(1, -10, 1, -10)
-scrollFrame.Position = UDim2.new(0, 5, 0, 5)
+scrollFrame.Size = UDim2.new(1, -8, 1, -8) -- Reduced padding
+scrollFrame.Position = UDim2.new(0, 4, 0, 4)
 scrollFrame.BackgroundTransparency = 1
 scrollFrame.BorderSizePixel = 0
-scrollFrame.ScrollBarThickness = 8
+scrollFrame.ScrollBarThickness = 6 -- Thinner scrollbar
 scrollFrame.ScrollBarImageColor3 = Color3.fromRGB(80, 80, 120)
 scrollFrame.CanvasSize = UDim2.new(0, 0, 0, 0)
 
 local contentText = Instance.new("TextLabel")
 contentText.Parent = scrollFrame
-contentText.Size = UDim2.new(1, -10, 1, 0)
-contentText.Position = UDim2.new(0, 5, 0, 0)
+contentText.Size = UDim2.new(1, -8, 1, 0) -- Reduced padding
+contentText.Position = UDim2.new(0, 4, 0, 0)
 contentText.BackgroundTransparency = 1
 contentText.Text = "Loading..."
 contentText.TextColor3 = Color3.fromRGB(255, 255, 255)
 contentText.Font = Enum.Font.SourceSans
-contentText.TextSize = 12
+contentText.TextSize = 10 -- Reduced from 12 to 10
 contentText.TextWrapped = true
 contentText.TextXAlignment = Enum.TextXAlignment.Left
 contentText.TextYAlignment = Enum.TextYAlignment.Top
@@ -351,14 +351,14 @@ local currentTab = 1
 for i, tab in ipairs(tabs) do
     local tabBtn = Instance.new("TextButton")
     tabBtn.Parent = tabContainer
-    tabBtn.Size = UDim2.new(0, 120, 1, 0)
+    tabBtn.Size = UDim2.new(0, 90, 1, 0) -- Reduced from 120 to 90
     tabBtn.Text = tab.icon .. " " .. tab.name:gsub("🏝️ ", ""):gsub("👥 ", ""):gsub("📡 ", ""):gsub("🛒 ", ""):gsub("🔍 ", ""):gsub("⚙️ ", "")
     tabBtn.BackgroundColor3 = i == 1 and tab.color or Color3.fromRGB(50, 50, 60)
     tabBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
     tabBtn.Font = Enum.Font.SourceSansBold
-    tabBtn.TextSize = 11
+    tabBtn.TextSize = 9 -- Reduced from 11 to 9
     tabBtn.BorderSizePixel = 0
-    Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 6)
+    Instance.new("UICorner", tabBtn).CornerRadius = UDim.new(0, 4) -- Smaller corner radius
     
     tabButtons[i] = tabBtn
     
@@ -377,34 +377,34 @@ for i, tab in ipairs(tabs) do
     end)
 end
 
--- Control buttons
+-- Control buttons (compact)
 local buttonFrame = Instance.new("Frame")
 buttonFrame.Parent = contentFrame
-buttonFrame.Size = UDim2.new(1, -20, 0, 30)
-buttonFrame.Position = UDim2.new(0, 10, 1, -35)
+buttonFrame.Size = UDim2.new(1, -16, 0, 25) -- Reduced height from 30 to 25
+buttonFrame.Position = UDim2.new(0, 8, 1, -30) -- Adjusted position
 buttonFrame.BackgroundTransparency = 1
 
 local refreshBtn = Instance.new("TextButton")
 refreshBtn.Parent = buttonFrame
-refreshBtn.Size = UDim2.new(0, 80, 1, 0)
+refreshBtn.Size = UDim2.new(0, 70, 1, 0) -- Reduced from 80 to 70
 refreshBtn.Position = UDim2.new(0, 0, 0, 0)
 refreshBtn.Text = "🔄 Refresh"
 refreshBtn.BackgroundColor3 = Color3.fromRGB(60, 150, 60)
 refreshBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 refreshBtn.Font = Enum.Font.SourceSansBold
-refreshBtn.TextSize = 10
+refreshBtn.TextSize = 9 -- Reduced from 10 to 9
 refreshBtn.BorderSizePixel = 0
 Instance.new("UICorner", refreshBtn).CornerRadius = UDim.new(0, 4)
 
 local exportBtn = Instance.new("TextButton")
 exportBtn.Parent = buttonFrame
-exportBtn.Size = UDim2.new(0, 80, 1, 0)
-exportBtn.Position = UDim2.new(0, 90, 0, 0)
+exportBtn.Size = UDim2.new(0, 70, 1, 0) -- Reduced from 80 to 70
+exportBtn.Position = UDim2.new(0, 75, 0, 0) -- Adjusted spacing
 exportBtn.Text = "📋 Export"
 exportBtn.BackgroundColor3 = Color3.fromRGB(70, 130, 180)
 exportBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
 exportBtn.Font = Enum.Font.SourceSansBold
-exportBtn.TextSize = 10
+exportBtn.TextSize = 9 -- Reduced from 10 to 9
 exportBtn.BorderSizePixel = 0
 Instance.new("UICorner", exportBtn).CornerRadius = UDim.new(0, 4)
 
@@ -441,10 +441,10 @@ floatingBtn.MouseButton1Click:Connect(function()
     floatingBtn.BackgroundColor3 = mainFrame.Visible and Color3.fromRGB(200, 80, 80) or Color3.fromRGB(60, 120, 200)
     
     if mainFrame.Visible then
-        -- Animate show
+        -- Animate show (compact size)
         mainFrame.Size = UDim2.new(0, 0, 0, 0)
         local tween = TweenService:Create(mainFrame, TweenInfo.new(0.3, Enum.EasingStyle.Back), {
-            Size = UDim2.new(0, 800, 0, 450)
+            Size = UDim2.new(0, 600, 0, 320) -- Updated to new compact size
         })
         tween:Play()
         
