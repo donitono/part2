@@ -28,6 +28,21 @@ local HttpService = game:GetService("HttpService")
 local TeleportService = game:GetService("TeleportService")
 local TweenService = game:GetService("TweenService")
 local SoundService = game:GetService("SoundService")
+local StarterGui = game:GetService("StarterGui")
+
+-- Notification system
+local function Notify(title, text, duration)
+    duration = duration or 3
+    pcall(function()
+        StarterGui:SetCore("SendNotification", {
+            Title = title or "XSAN Fish It Pro",
+            Text = text or "Notification", 
+            Duration = duration,
+            Icon = "rbxassetid://6023426923"
+        })
+    end)
+    print("XSAN:", title, "-", text)
+end
 
 -- Check basic requirements
 if not LocalPlayer then
@@ -593,20 +608,31 @@ end)
 print("XSAN: Loading remotes...")
 local net, rodRemote, miniGameRemote, finishRemote, equipRemote
 
-pcall(function()
-    net = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index"):WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net")
-    print("XSAN: Net found")
-    rodRemote = net:WaitForChild("RF/ChargeFishingRod")
-    print("XSAN: Rod remote found")
-    miniGameRemote = net:WaitForChild("RF/RequestFishingMinigameStarted")
-    print("XSAN: MiniGame remote found")
-    finishRemote = net:WaitForChild("RE/FishingCompleted")
-    print("XSAN: Finish remote found")
-    equipRemote = net:WaitForChild("RE/EquipToolFromHotbar")
-    print("XSAN: Equip remote found")
-end)
+local function initializeRemotes()
+    local success, error = pcall(function()
+        net = ReplicatedStorage:WaitForChild("Packages"):WaitForChild("_Index"):WaitForChild("sleitnick_net@0.2.0"):WaitForChild("net")
+        print("XSAN: Net found")
+        rodRemote = net:WaitForChild("RF/ChargeFishingRod")
+        print("XSAN: Rod remote found")
+        miniGameRemote = net:WaitForChild("RF/RequestFishingMinigameStarted") 
+        print("XSAN: MiniGame remote found")
+        finishRemote = net:WaitForChild("RE/FishingCompleted")
+        print("XSAN: Finish remote found")
+        equipRemote = net:WaitForChild("RE/EquipToolFromHotbar")
+        print("XSAN: Equip remote found")
+    end)
+    
+    if not success then
+        warn("XSAN: Error loading remotes:", error)
+        Notify("XSAN Error", "Failed to load game remotes. Some features may not work.", 5)
+        return false
+    end
+    
+    return true
+end
 
-print("XSAN: Remotes loading completed!")
+local remotesLoaded = initializeRemotes()
+print("XSAN: Remotes loading completed! Status:", remotesLoaded)
 
 -- State Variables
 print("XSAN: Initializing variables...")
@@ -814,15 +840,15 @@ print("XSAN: Using dynamic location system like old.lua for accuracy")
 
 -- Notification Functions
 local function NotifySuccess(title, message)
-	Rayfield:Notify({ Title = "XSAN - " .. title, Content = message, Duration = 3, Image = "circle-check" })
+	Notify("XSAN - " .. title, message, 3)
 end
 
 local function NotifyError(title, message)
-	Rayfield:Notify({ Title = "XSAN - " .. title, Content = message, Duration = 3, Image = "ban" })
+	Notify("XSAN ERROR - " .. title, message, 4)
 end
 
 local function NotifyInfo(title, message)
-	Rayfield:Notify({ Title = "XSAN - " .. title, Content = message, Duration = 4, Image = "info" })
+	Notify("XSAN INFO - " .. title, message, 3)
 end
 
 -- Analytics Functions
