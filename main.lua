@@ -67,7 +67,15 @@ print("XSAN: Loading UI Library...")
 local Rayfield
 local success, error = pcall(function()
     print("XSAN: Attempting to load Rayfield...")
-    Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/donitono/versi1/refs/heads/main/ui.lua"))()
+    -- Try to load fixed UI first, fallback to original if needed
+    local uiContent = game:HttpGet("https://raw.githubusercontent.com/donitono/part2/main/ui_fixed.lua")
+    if uiContent and #uiContent > 0 then
+        print("XSAN: Loading fixed UI library...")
+        Rayfield = loadstring(uiContent)()
+    else
+        print("XSAN: Fallback to original UI library...")
+        Rayfield = loadstring(game:HttpGet("https://raw.githubusercontent.com/donitono/versi1/refs/heads/main/ui.lua"))()
+    end
     print("XSAN: Rayfield loadstring executed")
 end)
 
@@ -254,7 +262,9 @@ end
 
 -- NPCs and Events (keeping some hardcoded for important locations)
 TeleportLocations.NPCs = {
-    ["🛒 Shop (Alex)"] = CFrame.new(391, 135, 300),
+    ["🛒 Shop (Alex)"] = CFrame.new(-28.43, 4.50, 2891.28),
+    ["🛒 Shop (Joe)"] = CFrame.new(112.01, 4.75, 2877.32),
+    ["🛒 Shop (Seth)"] = CFrame.new(72.02, 4.58, 2885.28),
     ["🎣 Rod Shop (Marc)"] = CFrame.new(454, 150, 229),
     ["⚓ Shipwright"] = CFrame.new(343, 135, 271),
     ["📦 Storage (Henry)"] = CFrame.new(491, 150, 272),
