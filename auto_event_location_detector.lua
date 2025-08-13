@@ -97,8 +97,8 @@ local function scanEvent()
     local eventName, eventDesc, eventLocation = nil, nil, nil
     local debugLabels, debugParts = {}, {}
     local eventKeywords = {"black hole", "galaxy", "corrupt", "admin", "event", "mutation", "limited"}
-    -- Scan semua label yang mengandung kata kunci event
-    for _, obj in pairs(CoreGui:GetDescendants()) do
+    -- Fungsi rekursif untuk scan semua label di semua level
+    local function scanLabels(obj)
         if obj:IsA("TextLabel") and obj.Text then
             local txt = obj.Text:lower()
             for _, keyword in ipairs(eventKeywords) do
@@ -111,7 +111,12 @@ local function scanEvent()
                 end
             end
         end
+        -- Scan children
+        for _, child in ipairs(obj:GetChildren()) do
+            scanLabels(child)
+        end
     end
+    scanLabels(CoreGui)
     -- Scan lokasi event di Workspace
     for _, obj in pairs(Workspace:GetDescendants()) do
         local n = obj.Name:lower()
@@ -137,8 +142,8 @@ local function scanEvent()
         infoBox.Text = info
         lastInfo = info
     else
-        infoBox.Text = "Menunggu event..."
-        lastInfo = "Menunggu event..."
+        infoBox.Text = "Menunggu event...\n[Debug Labels]: " .. table.concat(debugLabels, ", ")
+        lastInfo = infoBox.Text
     end
 end
 
