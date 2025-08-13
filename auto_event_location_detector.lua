@@ -96,14 +96,19 @@ end)
 local function scanEvent()
     local eventName, eventDesc, eventLocation = nil, nil, nil
     local debugLabels, debugParts = {}, {}
+    local eventKeywords = {"black hole", "galaxy", "corrupt", "admin", "event", "mutation", "limited"}
     -- Scan semua label yang mengandung kata kunci event
     for _, obj in pairs(CoreGui:GetDescendants()) do
         if obj:IsA("TextLabel") and obj.Text then
             local txt = obj.Text:lower()
-            if txt:find("event") or txt:find("black hole") or txt:find("admin") then
-                table.insert(debugLabels, obj.Text)
-                if not eventName then eventName = obj.Text end
-                if txt:find("black hole") then eventDesc = obj.Text end
+            for _, keyword in ipairs(eventKeywords) do
+                if txt:find(keyword) then
+                    table.insert(debugLabels, obj.Text)
+                    if not eventName and (keyword ~= "event" and keyword ~= "admin") then
+                        eventName = obj.Text
+                    end
+                    if txt:find("black hole") then eventDesc = obj.Text end
+                end
             end
         end
     end
