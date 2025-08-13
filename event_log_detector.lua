@@ -51,8 +51,10 @@ logBox.MultiLine = true
 logBox.Text = ""
 
 -- Fungsi logging
+local allLogs = {}
 local function logEvent(text)
     logBox.Text = logBox.Text .. text .. "\n"
+    table.insert(allLogs, text)
     logBox.CursorPosition = #logBox.Text + 1
 end
 
@@ -81,5 +83,49 @@ task.spawn(function()
     while true do
         task.wait(10)
         hookRemotes()
+    end
+end)
+
+-- Floating button untuk show/hide UI
+local floatingBtn = Instance.new("TextButton")
+floatingBtn.Parent = screen
+floatingBtn.Size = UDim2.new(0, 50, 0, 50)
+floatingBtn.Position = UDim2.new(0, 20, 0.5, -25)
+floatingBtn.BackgroundColor3 = Color3.fromRGB(70, 130, 200)
+floatingBtn.BorderSizePixel = 0
+floatingBtn.Text = "📝"
+floatingBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+floatingBtn.TextScaled = true
+floatingBtn.Font = Enum.Font.SourceSansBold
+Instance.new("UICorner", floatingBtn).CornerRadius = UDim.new(0.5, 0)
+
+local isUIVisible = true
+floatingBtn.MouseButton1Click:Connect(function()
+    isUIVisible = not isUIVisible
+    mainFrame.Visible = isUIVisible
+    floatingBtn.BackgroundColor3 = isUIVisible and Color3.fromRGB(70, 130, 200) or Color3.fromRGB(200, 100, 100)
+    floatingBtn.Text = isUIVisible and "📝" or "👁"
+end)
+mainFrame.Visible = true
+
+-- Tombol export/copy semua log ke clipboard
+local exportBtn = Instance.new("TextButton")
+exportBtn.Parent = mainFrame
+exportBtn.Size = UDim2.new(0, 120, 0, 30)
+exportBtn.Position = UDim2.new(1, -130, 1, -35)
+exportBtn.BackgroundColor3 = Color3.fromRGB(60, 120, 180)
+exportBtn.BorderSizePixel = 0
+exportBtn.Text = "📋 Export Log"
+exportBtn.TextColor3 = Color3.fromRGB(255, 255, 255)
+exportBtn.TextScaled = true
+exportBtn.Font = Enum.Font.SourceSansBold
+Instance.new("UICorner", exportBtn).CornerRadius = UDim.new(0, 6)
+
+exportBtn.MouseButton1Click:Connect(function()
+    if setclipboard then
+        setclipboard(table.concat(allLogs, "\n"))
+        logEvent("[Export] Semua log telah dicopy ke clipboard!")
+    else
+        logEvent("[Export] setclipboard tidak tersedia di executor ini.")
     end
 end)
