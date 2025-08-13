@@ -95,23 +95,24 @@ end)
 -- Fungsi utama: scan event dan lokasi
 local function scanEvent()
     local eventName, eventDesc, eventLocation = nil, nil, nil
-    -- Scan UI (Admin Event, Black Hole, dll)
+    local debugLabels, debugParts = {}, {}
+    -- Scan semua label yang mengandung kata kunci event
     for _, obj in pairs(CoreGui:GetDescendants()) do
-        if obj:IsA("TextLabel") and obj.Text and obj.Text:find("Admin Event") then
-            eventName = "Admin Event"
-            -- Cari nama event (misal: Black Hole)
-            local parent = obj.Parent
-            for _, child in pairs(parent:GetChildren()) do
-                if child:IsA("TextLabel") and child.Text and child.Text:find("Black Hole") then
-                    eventDesc = child.Text
-                end
+        if obj:IsA("TextLabel") and obj.Text then
+            local txt = obj.Text:lower()
+            if txt:find("event") or txt:find("black hole") or txt:find("admin") then
+                table.insert(debugLabels, obj.Text)
+                if not eventName then eventName = obj.Text end
+                if txt:find("black hole") then eventDesc = obj.Text end
             end
         end
     end
     -- Scan lokasi event di Workspace
     for _, obj in pairs(Workspace:GetDescendants()) do
-        if obj.Name:find("BlackHole") or obj.Name:find("Event") then
+        local n = obj.Name:lower()
+        if n:find("black") or n:find("hole") or n:find("event") or n:find("admin") then
             if obj:IsA("BasePart") then
+                table.insert(debugParts, obj.Name .. " @ " .. tostring(obj.Position))
                 eventLocation = obj.Position
             end
         end
@@ -121,6 +122,12 @@ local function scanEvent()
         local info = "✨ EVENT DETECTED!\n" .. eventName .. "\n" .. (eventDesc or "")
         if eventLocation then
             info = info .. "\nLokasi: " .. tostring(eventLocation)
+        end
+        if #debugLabels > 0 then
+            info = info .. "\n[Debug Labels]: " .. table.concat(debugLabels, ", ")
+        end
+        if #debugParts > 0 then
+            info = info .. "\n[Debug Parts]: " .. table.concat(debugParts, ", ")
         end
         infoBox.Text = info
         lastInfo = info
