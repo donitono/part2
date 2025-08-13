@@ -99,15 +99,30 @@ local function scanEvent()
     local eventKeywords = {"black hole", "galaxy", "corrupt", "admin", "event", "mutation", "limited"}
     -- Fungsi rekursif untuk scan semua label di semua level
     local function scanLabels(obj)
-        if obj:IsA("TextLabel") and obj.Text then
-            local txt = obj.Text:lower()
-            for _, keyword in ipairs(eventKeywords) do
-                if txt:find(keyword) then
-                    table.insert(debugLabels, obj.Text)
-                    if not eventName and (keyword ~= "event" and keyword ~= "admin") then
-                        eventName = obj.Text
+        -- Cek property Text
+        if obj:IsA("TextLabel") or obj:IsA("ImageLabel") or obj:IsA("Frame") or obj:IsA("TextButton") then
+            if obj.Text then
+                local txt = tostring(obj.Text):lower()
+                for _, keyword in ipairs(eventKeywords) do
+                    if txt:find(keyword) then
+                        table.insert(debugLabels, obj.Text)
+                        if not eventName and (keyword ~= "event" and keyword ~= "admin") then
+                            eventName = obj.Text
+                        end
+                        if txt:find("black hole") then eventDesc = obj.Text end
                     end
-                    if txt:find("black hole") then eventDesc = obj.Text end
+                end
+            end
+        end
+        -- Cek property Name
+        if obj.Name then
+            local n = tostring(obj.Name):lower()
+            for _, keyword in ipairs(eventKeywords) do
+                if n:find(keyword) then
+                    table.insert(debugLabels, obj.Name)
+                    if not eventName and (keyword ~= "event" and keyword ~= "admin") then
+                        eventName = obj.Name
+                    end
                 end
             end
         end
